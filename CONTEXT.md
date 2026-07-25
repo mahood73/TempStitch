@@ -20,6 +20,7 @@ Core functionality, polish, and deployment.
 - Size estimation with default gauge (#23)
 - Colour key as equal-width grid (#26)
 - Add favicon (#27)
+- Select Celsius / Fahrenheit (#29)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
@@ -27,6 +28,7 @@ Core functionality, polish, and deployment.
 - Yarn quantity calculator (#10)
 - Zoom in/out on design preview (#24)
 - Adjust pixel size based on tension (#25)
+- Site logo (#28)
 
 ### v2 — major version, new domain concepts
 - Selectable date range (#2)
