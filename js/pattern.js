@@ -18,12 +18,16 @@ const Pattern = (() => {
 
         const colourKey = ColorMapper.buildColourKey(min, max, numColours, paletteName);
 
-        const rows = weatherData.days.map(day => ({
-            date: day.date,
-            temp: day.temp,
-            colour: ColorMapper.getColor(day.temp, colourKey),
-            stitches: stitchCount,
-        }));
+        const rows = weatherData.days.map(day => {
+            const colourEntry = ColorMapper.getColor(day.temp, colourKey);
+            return {
+                date: day.date,
+                temp: day.temp,
+                colour: colourEntry.colour,
+                colourIndex: colourEntry.index,
+                stitches: stitchCount,
+            };
+        });
 
         const stats = {
             minTemp: Math.min(...temps),
@@ -36,7 +40,7 @@ const Pattern = (() => {
             const dateObj = new Date(row.date + 'T00:00:00');
             const month = dateObj.toLocaleString('en-GB', { month: 'short' });
             const day = dateObj.getDate();
-            return `Row ${i + 1} (${month} ${day}): ${row.stitches} stitches, ${row.colour} (${row.temp}°)`;
+            return `Row ${i + 1} (${month} ${day}): ${row.stitches} stitches, C${row.colourIndex} (${row.temp}°)`;
         });
 
         return {
@@ -89,12 +93,22 @@ const Pattern = (() => {
         container.innerHTML = `
             <div class="colour-key-bar">
                 ${colourKey.map(entry => `
-                    <div class="colour-key-block" style="background: ${entry.colour};" data-tooltip="${entry.label}"></div>
+                    <div class="colour-key-block" style="background: ${entry.colour};" data-tooltip="C${entry.index}: ${entry.name} (${entry.label})"></div>
                 `).join('')}
             </div>
             <div class="colour-key-labels">
                 <span>${colourKey[0].min}°</span>
                 <span>${colourKey[colourKey.length - 1].max}°</span>
+            </div>
+            <div class="colour-key-list">
+                ${colourKey.map(entry => `
+                    <div class="colour-key-item">
+                        <span class="colour-key-swatch" style="background: ${entry.colour};"></span>
+                        <span class="colour-key-id">C${entry.index}</span>
+                        <span class="colour-key-name">${entry.name}</span>
+                        <span class="colour-key-range">${entry.label}</span>
+                    </div>
+                `).join('')}
             </div>
         `;
     }
@@ -102,11 +116,16 @@ const Pattern = (() => {
     function renderInstructions(pattern, container) {
         const initialCount = 30;
         const allLines = pattern.instructions;
+        const colourMap = {};
+        pattern.rows.forEach(row => {
+            colourMap[row.colourIndex] = row.colour;
+        });
 
         function renderLines(lines) {
             container.innerHTML = lines.map(line => {
-                const parts = line.split(', ');
-                const colour = parts[1];
+                const match = line.match(/C(\d+)/);
+                const colourIndex = match ? parseInt(match[1]) : null;
+                const colour = colourIndex ? colourMap[colourIndex] : '#ccc';
                 return `<div class="instruction-line"><span class="instruction-swatch" style="background:${colour};"></span>${line}</div>`;
             }).join('');
         }

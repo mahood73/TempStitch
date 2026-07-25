@@ -11,11 +11,17 @@
         <header>
             <h1>TempStitch</h1>
             <p class="subtitle">Turn a year of weather into a knitting or crochet pattern</p>
+            <p><a href="about.html">About / Roadmap</a></p>
         </header>
 
         <main>
             <section class="card" id="location-section">
                 <h2>Location</h2>
+                <div class="form-group search-group">
+                    <label for="location-search">Search for a place</label>
+                    <input type="text" id="location-search" placeholder="e.g. London, Paris, New York" autocomplete="off">
+                    <div id="search-results" class="search-results" style="display: none;"></div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="latitude">Latitude</label>
@@ -56,14 +62,25 @@
                     </div>
                 </div>
 
+                <div class="settings-row">
+                    <div class="form-group">
+                        <label for="year-select">Year</label>
+                        <input type="number" id="year-select" min="1940" step="1">
+                        <small>Jan 1 – Dec 31. Data available from 1940.</small>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div class="form-group">
+                        <label for="num-colours">Number of Colours</label>
+                        <input type="number" id="num-colours" value="10" min="3" max="20" step="1">
+                        <small>Default: 10</small>
+                    </div>
+                </div>
+
                 <details class="advanced-toggle">
                     <summary>Advanced Options</summary>
                     <div class="settings-grid">
-                        <div class="form-group">
-                            <label for="num-colours">Number of Colours</label>
-                            <input type="number" id="num-colours" value="10" min="3" max="20" step="1">
-                            <small>Default: 10</small>
-                        </div>
                         <div class="form-group">
                             <label for="colour-key-min">Colour Key Min (°)</label>
                             <input type="number" id="colour-key-min" step="1">
@@ -106,6 +123,7 @@
 
         <footer>
             <p>Weather data from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> &mdash; each row = one day of max temperature</p>
+            <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSfQQD0TJGF447sfJBmKOJwxutjVbde2RqeC8-Ez6IeqYYMppw/viewform?usp=publish-editor" target="_blank" rel="noopener">Send Feedback</a> &middot; <a href="https://ko-fi.com/markhood" target="_blank" rel="noopener">Buy me a coffee</a></p>
         </footer>
     </div>
 

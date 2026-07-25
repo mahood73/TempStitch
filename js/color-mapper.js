@@ -72,6 +72,61 @@ const ColorMapper = (() => {
         return { min, max };
     }
 
+    function hexToHsl(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s;
+        const l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                case b: h = ((r - g) / d + 4) / 6; break;
+            }
+        }
+        return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+
+    function colourNameFromHex(hex) {
+        const { h, s, l } = hexToHsl(hex);
+        if (s < 10) {
+            if (l < 20) return 'Charcoal';
+            if (l < 40) return 'Dark Grey';
+            if (l < 60) return 'Grey';
+            if (l < 80) return 'Light Grey';
+            return 'White';
+        }
+        if (l < 15) return 'Black';
+        if (l > 85) return 'White';
+
+        let prefix = '';
+        if (l < 30) prefix = 'Dark ';
+        else if (l > 70) prefix = 'Light ';
+
+        let name;
+        if (h < 15 || h >= 345) name = 'Red';
+        else if (h < 35) name = 'Orange';
+        else if (h < 65) name = 'Yellow';
+        else if (h < 80) name = 'Lime';
+        else if (h < 160) name = 'Green';
+        else if (h < 185) name = 'Teal';
+        else if (h < 210) name = 'Cyan';
+        else if (h < 250) name = 'Blue';
+        else if (h < 280) name = 'Purple';
+        else if (h < 320) name = 'Pink';
+        else name = 'Rose';
+
+        return prefix + name;
+    }
+
     function buildColourKey(min, max, numColours, paletteName) {
         const scale = generateColourScale(paletteName, numColours);
         const increment = (max - min) / numColours;
@@ -82,6 +137,8 @@ const ColorMapper = (() => {
             const rangeMin = Math.round(temp);
             const rangeMax = Math.round(temp + increment);
             key.push({
+                index: i + 1,
+                name: colourNameFromHex(scale[i]),
                 min: rangeMin,
                 max: rangeMax,
                 label: `${rangeMin}°–${rangeMax - 1}°`,
@@ -95,9 +152,9 @@ const ColorMapper = (() => {
 
     function getColor(temp, colourKey) {
         for (const entry of colourKey) {
-            if (temp >= entry.min && temp < entry.max) return entry.colour;
+            if (temp >= entry.min && temp < entry.max) return entry;
         }
-        return colourKey[colourKey.length - 1].colour;
+        return colourKey[colourKey.length - 1];
     }
 
     return {

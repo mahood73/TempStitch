@@ -5,15 +5,18 @@ const Weather = (() => {
         return d.toISOString().split('T')[0];
     }
 
-    function getDateRange() {
+    function getDateRange(year) {
+        if (year) {
+            return { start: `${year}-01-01`, end: `${year}-12-31` };
+        }
         const end = new Date();
         const start = new Date();
         start.setDate(start.getDate() - 364);
         return { start: dateToString(start), end: dateToString(end) };
     }
 
-    async function fetchDailyMax(lat, lon, tempUnit = 'celsius') {
-        const { start, end } = getDateRange();
+    async function fetchDailyMax(lat, lon, tempUnit = 'celsius', year) {
+        const { start, end } = getDateRange(year);
         const params = new URLSearchParams({
             latitude: lat,
             longitude: lon,

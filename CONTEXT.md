@@ -2,6 +2,39 @@
 
 A tool that turns a year of daily maximum temperatures into a knitting or crochet pattern. Users input a location, the app fetches historical weather data, and generates a visual design and written instructions for a temperature blanket or scarf.
 
+## Roadmap
+
+### v1 (MVP) — current
+Core functionality, polish, and deployment.
+- Centre design in preview frame (#15)
+- Move 'Number of Colours' out of Advanced (#17)
+- Show place name in search box after selection (#18)
+- Use named/numbered colours in pattern instructions (#20)
+- Add year selector for date range (#21)
+- Update README with roadmap (#13)
+- Deploy to GitHub Pages (#14)
+
+### v1.1 — incremental improvements
+- Add stitch count presets (scarf/blanket) (#16)
+- Make pattern instructions downloadable (#19)
+
+### v1.5 — feature additions before v2
+- Gauge/tension swatch input (#1)
+- PDF export with printable instructions (#3)
+- Yarn quantity calculator (#10)
+
+### v2 — major version, new domain concepts
+- Selectable date range (#2)
+- Minimum temperature as border stitches (#5)
+- Weekly/monthly aggregation modes (#8)
+- Save/share patterns via URL (#9)
+
+### Someday — backlog
+- Interactive map picker for location (#4)
+- Additional weather variables (#6)
+- Multiple location comparison (#11)
+- Community pattern gallery (#12)
+
 ## Language
 
 **Design**:

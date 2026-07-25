@@ -5,10 +5,13 @@
         lat: $('latitude'),
         lon: $('longitude'),
         geoBtn: $('geo-location-btn'),
+        searchInput: $('location-search'),
+        searchResults: $('search-results'),
         fetchBtn: $('fetch-weather-btn'),
         status: $('location-status'),
         tempUnit: $('temp-unit'),
         stitchCount: $('stitch-count'),
+        yearSelect: $('year-select'),
         numColours: $('num-colours'),
         colourKeyMin: $('colour-key-min'),
         colourKeyMax: $('colour-key-max'),
@@ -25,6 +28,7 @@
 
     let currentPattern = null;
     let hasGenerated = false;
+    let searchTimeout = null;
 
     function showError(msg) {
         els.error.textContent = msg;
@@ -59,6 +63,63 @@
         return loc;
     }
 
+    function hideSearchResults() {
+        els.searchResults.style.display = 'none';
+        els.searchResults.innerHTML = '';
+    }
+
+    function showSearchResults(results) {
+        if (results.length === 0) {
+            els.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+            els.searchResults.style.display = 'block';
+            return;
+        }
+
+        els.searchResults.innerHTML = results.map((r, i) => {
+            const parts = [r.name];
+            if (r.admin1) parts.push(r.admin1);
+            if (r.country) parts.push(r.country);
+            const meta = parts.join(', ');
+            const coords = `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`;
+            return `<div class="search-result-item" data-index="${i}">
+                <div class="search-result-name">${r.name}</div>
+                <div class="search-result-meta">${meta} &middot; ${coords}</div>
+            </div>`;
+        }).join('');
+
+        els.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                const r = results[parseInt(item.dataset.index)];
+                els.lat.value = r.latitude.toFixed(4);
+                els.lon.value = r.longitude.toFixed(4);
+                const parts = [r.name];
+                if (r.admin1) parts.push(r.admin1);
+                if (r.country) parts.push(r.country);
+                els.searchInput.value = parts.join(', ');
+                hideSearchResults();
+                Location.save(r.latitude, r.longitude);
+                setStatus(`Location set: ${r.name}`, 'success');
+            });
+        });
+
+        els.searchResults.style.display = 'block';
+    }
+
+    async function handleSearch() {
+        const query = els.searchInput.value.trim();
+        if (query.length < 2) {
+            hideSearchResults();
+            return;
+        }
+
+        try {
+            const results = await Location.search(query);
+            showSearchResults(results);
+        } catch (err) {
+            hideSearchResults();
+        }
+    }
+
     async function generatePattern() {
         hideError();
         const loc = getLocation();
@@ -69,7 +130,8 @@
 
         try {
             const unit = els.tempUnit.value;
-            const result = await Weather.fetchDailyMax(loc.lat, loc.lon, unit);
+            const year = els.yearSelect.value ? parseInt(els.yearSelect.value) : null;
+            const result = await Weather.fetchDailyMax(loc.lat, loc.lon, unit, year);
 
             if (result.days.length === 0) {
                 showError('No weather data available for this location and date range');
@@ -133,6 +195,25 @@
             els.lat.value = saved.lat;
             els.lon.value = saved.lon;
         }
+
+        const prevYear = new Date().getFullYear() - 1;
+        els.yearSelect.value = prevYear;
+        els.yearSelect.max = prevYear;
+
+        els.searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(handleSearch, 300);
+        });
+
+        els.searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideSearchResults();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!els.searchResults.contains(e.target) && e.target !== els.searchInput) {
+                hideSearchResults();
+            }
+        });
 
         els.geoBtn.addEventListener('click', handleGeoLocation);
         els.fetchBtn.addEventListener('click', generatePattern);
