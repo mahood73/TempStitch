@@ -17,6 +17,7 @@ Core functionality, polish, and deployment.
 ### v1.1 — incremental improvements
 - Add stitch count presets (scarf/blanket) (#16)
 - Make pattern instructions downloadable (#19)
+- Size estimation with default gauge (#23)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
