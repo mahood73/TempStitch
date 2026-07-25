@@ -58,13 +58,8 @@ const Pattern = (() => {
         pattern.rows.forEach(row => {
             const rowEl = document.createElement('div');
             rowEl.className = 'pattern-row';
-            for (let s = 0; s < row.stitches; s++) {
-                const cell = document.createElement('div');
-                cell.className = 'pattern-cell';
-                cell.style.background = row.colour;
-                cell.setAttribute('data-tooltip', `${row.date}: ${row.temp}°`);
-                rowEl.appendChild(cell);
-            }
+            rowEl.style.background = row.colour;
+            rowEl.setAttribute('data-tooltip', `${row.date}: ${row.temp}°`);
             container.appendChild(rowEl);
         });
     }

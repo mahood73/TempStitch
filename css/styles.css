@@ -389,25 +389,13 @@ header h1 {
 }
 
 .pattern-row {
-    display: flex;
-    gap: 1px;
     height: 4px;
-}
-
-.pattern-cell {
-    width: 8px;
-    height: 100%;
     border-radius: 1px;
     position: relative;
+    cursor: crosshair;
 }
 
-.pattern-cell:hover {
-    outline: 2px solid var(--text);
-    outline-offset: -1px;
-    z-index: 1;
-}
-
-.pattern-cell[data-tooltip]::after {
+.pattern-row[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: calc(100% + 6px);
@@ -424,7 +412,7 @@ header h1 {
     transition: opacity 0.12s;
 }
 
-.pattern-cell:hover[data-tooltip]::after {
+.pattern-row:hover[data-tooltip]::after {
     opacity: 1;
 }
 
