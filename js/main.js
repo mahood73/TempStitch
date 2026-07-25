@@ -9,7 +9,7 @@
         status: $('location-status'),
         tempUnit: $('temp-unit'),
         stitchCount: $('stitch-count'),
-        increment: $('colour-increment'),
+        numColours: $('num-colours'),
         colourKeyMin: $('colour-key-min'),
         colourKeyMax: $('colour-key-max'),
         palette: $('colour-palette'),
@@ -24,6 +24,7 @@
     };
 
     let currentPattern = null;
+    let hasGenerated = false;
 
     function showError(msg) {
         els.error.textContent = msg;
@@ -46,15 +47,6 @@
     function setStatus(msg, type) {
         els.status.textContent = msg;
         els.status.className = 'status ' + (type || '');
-    }
-
-    function syncTempUnit() {
-        const unit = els.tempUnit.value;
-        if (unit === 'fahrenheit') {
-            els.increment.value = 8;
-        } else {
-            els.increment.value = 5;
-        }
     }
 
     function getLocation() {
@@ -88,7 +80,7 @@
             const options = {
                 stitchCount: parseInt(els.stitchCount.value) || 50,
                 paletteName: els.palette.value,
-                increment: els.increment.value ? parseFloat(els.increment.value) : null,
+                numColours: parseInt(els.numColours.value) || 10,
                 colourKeyMin: els.colourKeyMin.value ? parseFloat(els.colourKeyMin.value) : null,
                 colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
             };
@@ -105,6 +97,11 @@
 
             els.patternSection.style.display = 'block';
             els.patternSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            if (!hasGenerated) {
+                hasGenerated = true;
+                els.fetchBtn.textContent = 'Update Design';
+            }
 
             setStatus(`Design generated: ${result.meta.latitude.toFixed(2)}, ${result.meta.longitude.toFixed(2)}`, 'success');
         } catch (err) {
@@ -139,7 +136,6 @@
 
         els.geoBtn.addEventListener('click', handleGeoLocation);
         els.fetchBtn.addEventListener('click', generatePattern);
-        els.tempUnit.addEventListener('change', syncTempUnit);
         els.downloadBtn.addEventListener('click', () => {
             if (currentPattern) Export.downloadImage(currentPattern);
         });

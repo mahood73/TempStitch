@@ -21,7 +21,7 @@ const Export = (() => {
         ctx.fillStyle = '#1c1917';
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Weather Blanket Design', width / 2, 25);
+        ctx.fillText('TempStitch Design', width / 2, 25);
 
         ctx.font = '10px sans-serif';
         ctx.fillStyle = '#78716c';
@@ -52,7 +52,7 @@ const Export = (() => {
         ctx.fillText(`${pattern.options.max}°`, width - padding, keyY + 24);
 
         const link = document.createElement('a');
-        link.download = `weather-blanket-${range.start}-to-${range.end}.png`;
+        link.download = `tempstitch-${range.start}-to-${range.end}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     }

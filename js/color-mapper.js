@@ -62,46 +62,34 @@ const ColorMapper = (() => {
         return scale;
     }
 
-    function calculateSmartDefaults(dataMin, dataMax) {
+    function calculateSmartDefaults(dataMin, dataMax, numColours) {
         const range = dataMax - dataMin;
-        if (range <= 0) return { increment: 5, numColours: 10, min: dataMin - 5, max: dataMax + 5 };
+        if (range <= 0) return { min: dataMin - 5, max: dataMax + 5 };
 
-        let numColours = Math.round(range / 5);
-        numColours = Math.max(8, Math.min(14, numColours));
+        const min = Math.floor(dataMin);
+        const max = Math.ceil(dataMax);
 
-        let increment = range / numColours;
-        if (increment <= 3) increment = 3;
-        else if (increment <= 4) increment = 4;
-        else if (increment <= 6) increment = 5;
-        else if (increment <= 8) increment = 6;
-        else increment = 10;
-
-        numColours = Math.ceil(range / increment);
-        numColours = Math.max(8, Math.min(14, numColours));
-
-        const min = Math.floor(dataMin / increment) * increment;
-        const max = Math.ceil(dataMax / increment) * increment;
-
-        return { increment, numColours, min, max };
+        return { min, max };
     }
 
-    function buildColourKey(min, max, increment, paletteName) {
-        const scale = generateColourScale(paletteName, Math.ceil((max - min) / increment));
+    function buildColourKey(min, max, numColours, paletteName) {
+        const scale = generateColourScale(paletteName, numColours);
+        const increment = (max - min) / numColours;
         const key = [];
         let temp = min;
-        let i = 0;
-        while (temp < max && i < scale.length) {
-            const rangeMin = temp;
-            const rangeMax = temp + increment;
+
+        for (let i = 0; i < numColours; i++) {
+            const rangeMin = Math.round(temp);
+            const rangeMax = Math.round(temp + increment);
             key.push({
                 min: rangeMin,
                 max: rangeMax,
                 label: `${rangeMin}°–${rangeMax - 1}°`,
                 colour: scale[i],
             });
-            temp = rangeMax;
-            i++;
+            temp += increment;
         }
+
         return key;
     }
 
@@ -112,17 +100,12 @@ const ColorMapper = (() => {
         return colourKey[colourKey.length - 1].colour;
     }
 
-    function buildLegendGradient(colourKey) {
-        return `linear-gradient(to right, ${colourKey.map(e => e.colour).join(', ')})`;
-    }
-
     return {
         palettes,
         generateColourScale,
         calculateSmartDefaults,
         buildColourKey,
         getColor,
-        buildLegendGradient,
         rgbToHex,
     };
 })();

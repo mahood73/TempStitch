@@ -3,7 +3,7 @@ const Pattern = (() => {
         const {
             stitchCount = 50,
             paletteName = 'default',
-            increment = null,
+            numColours = 10,
             colourKeyMin = null,
             colourKeyMax = null,
         } = options;
@@ -12,12 +12,11 @@ const Pattern = (() => {
         const dataMin = Math.min(...temps);
         const dataMax = Math.max(...temps);
 
-        let smart = ColorMapper.calculateSmartDefaults(dataMin, dataMax);
+        const smart = ColorMapper.calculateSmartDefaults(dataMin, dataMax, numColours);
         const min = colourKeyMin !== null ? colourKeyMin : smart.min;
         const max = colourKeyMax !== null ? colourKeyMax : smart.max;
-        const inc = increment !== null ? increment : smart.increment;
 
-        const colourKey = ColorMapper.buildColourKey(min, max, inc, paletteName);
+        const colourKey = ColorMapper.buildColourKey(min, max, numColours, paletteName);
 
         const rows = weatherData.days.map(day => ({
             date: day.date,
@@ -45,7 +44,7 @@ const Pattern = (() => {
             stats,
             colourKey,
             instructions,
-            options: { stitchCount, paletteName, increment: inc, min, max },
+            options: { stitchCount, paletteName, numColours, min, max },
         };
     }
 
