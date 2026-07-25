@@ -19,6 +19,7 @@ Core functionality, polish, and deployment.
 - Make pattern instructions downloadable (#19)
 - Size estimation with default gauge (#23)
 - Colour key as equal-width grid (#26)
+- Add favicon (#27)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
