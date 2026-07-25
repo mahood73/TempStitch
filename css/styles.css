@@ -389,6 +389,7 @@ header h1 {
 }
 
 .pattern-row {
+    width: 100%;
     height: 4px;
     border-radius: 1px;
     position: relative;
