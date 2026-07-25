@@ -18,6 +18,7 @@ Core functionality, polish, and deployment.
 - Add stitch count presets (scarf/blanket) (#16)
 - Make pattern instructions downloadable (#19)
 - Size estimation with default gauge (#23)
+- Colour key as equal-width grid (#26)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
