@@ -107,34 +107,53 @@ const ColorMapper = (() => {
         if (l < 12) return 'Black';
         if (l > 88) return 'White';
 
-        let prefix = '';
-        if (l < 25) prefix = 'Deep ';
-        else if (l < 40) prefix = 'Dark ';
-        else if (l > 75) prefix = 'Pale ';
-        else if (l > 65) prefix = 'Light ';
+        const low = l < 35;
+        const high = l > 65;
+        const pale = l > 75;
+        const vivid = s > 65;
 
         let name;
-        if (h < 10 || h >= 350) name = 'Red';
-        else if (h < 20) name = 'Crimson';
-        else if (h < 35) name = 'Orange';
-        else if (h < 50) name = 'Amber';
-        else if (h < 65) name = 'Yellow';
-        else if (h < 80) name = 'Lime';
-        else if (h < 100) name = 'Chartreuse';
-        else if (h < 140) name = 'Green';
-        else if (h < 160) name = 'Emerald';
-        else if (h < 175) name = 'Teal';
-        else if (h < 195) name = 'Cyan';
-        else if (h < 215) name = 'Sky';
-        else if (h < 240) name = 'Blue';
-        else if (h < 260) name = 'Indigo';
-        else if (h < 280) name = 'Purple';
-        else if (h < 300) name = 'Violet';
-        else if (h < 320) name = 'Magenta';
-        else if (h < 335) name = 'Pink';
-        else name = 'Rose';
+        if (h < 10 || h >= 350) {
+            name = low ? 'Burgundy' : vivid ? 'Scarlet' : 'Brick Red';
+        } else if (h < 20) {
+            name = low ? 'Maroon' : vivid ? 'Crimson' : 'Rose Red';
+        } else if (h < 35) {
+            name = low ? 'Rust' : high ? 'Peach' : vivid ? 'Orange' : 'Copper';
+        } else if (h < 50) {
+            name = low ? 'Brown' : high ? 'Cream' : vivid ? 'Amber' : 'Tan';
+        } else if (h < 65) {
+            name = low ? 'Olive' : high ? 'Lemon' : vivid ? 'Gold' : 'Mustard';
+        } else if (h < 80) {
+            name = low ? 'Moss' : high ? 'Pale Lime' : 'Lime';
+        } else if (h < 100) {
+            name = low ? 'Forest' : high ? 'Mint' : vivid ? 'Chartreuse' : 'Sage';
+        } else if (h < 140) {
+            name = low ? 'Hunter Green' : vivid ? 'Green' : 'Sage Green';
+        } else if (h < 160) {
+            name = low ? 'Deep Teal' : vivid ? 'Emerald' : 'Jade';
+        } else if (h < 175) {
+            name = low ? 'Pine' : vivid ? 'Teal' : 'Sea Green';
+        } else if (h < 195) {
+            name = low ? 'Teal' : vivid ? 'Cyan' : 'Aqua';
+        } else if (h < 215) {
+            name = low ? 'Steel Blue' : vivid ? 'Cerulean' : 'Powder Blue';
+        } else if (h < 240) {
+            name = low ? 'Navy' : high ? 'Cornflower' : vivid ? 'Royal Blue' : 'Cobalt';
+        } else if (h < 260) {
+            name = low ? 'Deep Indigo' : high ? 'Periwinkle' : 'Indigo';
+        } else if (h < 280) {
+            name = low ? 'Plum' : vivid ? 'Purple' : 'Heather';
+        } else if (h < 300) {
+            name = low ? 'Grape' : high ? 'Lilac' : 'Violet';
+        } else if (h < 320) {
+            name = low ? 'Plum' : high ? 'Orchid' : vivid ? 'Magenta' : 'Mauve';
+        } else if (h < 335) {
+            name = low ? 'Burgundy' : high ? 'Blush' : vivid ? 'Hot Pink' : 'Dusty Rose';
+        } else {
+            name = low ? 'Maroon' : high ? 'Rose Pink' : 'Rose';
+        }
 
-        return prefix + name;
+        return name;
     }
 
     function deduplicateNames(key) {
