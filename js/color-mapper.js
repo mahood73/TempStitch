@@ -98,33 +98,57 @@ const ColorMapper = (() => {
     function colourNameFromHex(hex) {
         const { h, s, l } = hexToHsl(hex);
         if (s < 10) {
-            if (l < 20) return 'Charcoal';
-            if (l < 40) return 'Dark Grey';
-            if (l < 60) return 'Grey';
-            if (l < 80) return 'Light Grey';
+            if (l < 15) return 'Black';
+            if (l < 30) return 'Charcoal';
+            if (l < 50) return 'Grey';
+            if (l < 75) return 'Silver';
             return 'White';
         }
-        if (l < 15) return 'Black';
-        if (l > 85) return 'White';
+        if (l < 12) return 'Black';
+        if (l > 88) return 'White';
 
         let prefix = '';
-        if (l < 30) prefix = 'Dark ';
-        else if (l > 70) prefix = 'Light ';
+        if (l < 25) prefix = 'Deep ';
+        else if (l < 40) prefix = 'Dark ';
+        else if (l > 75) prefix = 'Pale ';
+        else if (l > 65) prefix = 'Light ';
 
         let name;
-        if (h < 15 || h >= 345) name = 'Red';
+        if (h < 10 || h >= 350) name = 'Red';
+        else if (h < 20) name = 'Crimson';
         else if (h < 35) name = 'Orange';
+        else if (h < 50) name = 'Amber';
         else if (h < 65) name = 'Yellow';
         else if (h < 80) name = 'Lime';
-        else if (h < 160) name = 'Green';
-        else if (h < 185) name = 'Teal';
-        else if (h < 210) name = 'Cyan';
-        else if (h < 250) name = 'Blue';
+        else if (h < 100) name = 'Chartreuse';
+        else if (h < 140) name = 'Green';
+        else if (h < 160) name = 'Emerald';
+        else if (h < 175) name = 'Teal';
+        else if (h < 195) name = 'Cyan';
+        else if (h < 215) name = 'Sky';
+        else if (h < 240) name = 'Blue';
+        else if (h < 260) name = 'Indigo';
         else if (h < 280) name = 'Purple';
-        else if (h < 320) name = 'Pink';
+        else if (h < 300) name = 'Violet';
+        else if (h < 320) name = 'Magenta';
+        else if (h < 335) name = 'Pink';
         else name = 'Rose';
 
         return prefix + name;
+    }
+
+    function deduplicateNames(key) {
+        const used = {};
+        return key.map(entry => {
+            let name = entry.name;
+            if (used[name]) {
+                used[name]++;
+                name = `${name} ${used[name]}`;
+            } else {
+                used[name] = 1;
+            }
+            return { ...entry, name };
+        });
     }
 
     function buildColourKey(min, max, numColours, paletteName) {
@@ -147,7 +171,7 @@ const ColorMapper = (() => {
             temp += increment;
         }
 
-        return key;
+        return deduplicateNames(key);
     }
 
     function getColor(temp, colourKey) {

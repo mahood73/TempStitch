@@ -25,6 +25,7 @@ const Pattern = (() => {
                 temp: day.temp,
                 colour: colourEntry.colour,
                 colourIndex: colourEntry.index,
+                colourName: colourEntry.name,
                 stitches: stitchCount,
             };
         });
@@ -40,7 +41,7 @@ const Pattern = (() => {
             const dateObj = new Date(row.date + 'T00:00:00');
             const month = dateObj.toLocaleString('en-GB', { month: 'short' });
             const day = dateObj.getDate();
-            return `Row ${i + 1} (${month} ${day}): ${row.stitches} stitches, C${row.colourIndex} (${row.temp}°)`;
+            return `Row ${i + 1} (${month} ${day}): ${row.stitches} stitches, C${row.colourIndex} ${row.colourName} (${row.temp}°)`;
         });
 
         return {
