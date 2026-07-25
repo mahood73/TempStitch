@@ -21,6 +21,7 @@ Core functionality, polish, and deployment.
 - Colour key as equal-width grid (#26)
 - Add favicon (#27)
 - Select Celsius / Fahrenheit (#29)
+- Knit / crochet toggle (#30)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
@@ -29,6 +30,7 @@ Core functionality, polish, and deployment.
 - Zoom in/out on design preview (#24)
 - Adjust pixel size based on tension (#25)
 - Site logo (#28)
+- Stitched preview appearance (#31)
 
 ### v2 — major version, new domain concepts
 - Selectable date range (#2)
