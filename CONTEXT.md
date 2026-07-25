@@ -23,6 +23,8 @@ Core functionality, polish, and deployment.
 - Gauge/tension swatch input (#1)
 - PDF export with printable instructions (#3)
 - Yarn quantity calculator (#10)
+- Zoom in/out on design preview (#24)
+- Adjust pixel size based on tension (#25)
 
 ### v2 — major version, new domain concepts
 - Selectable date range (#2)

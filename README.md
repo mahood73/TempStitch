@@ -41,7 +41,7 @@ js/main.js          — app wiring and event handlers
 |---------|-------------|
 | **v1 (MVP)** | Core functionality, polish, and deployment |
 | **v1.1** | Stitch count presets, downloadable instructions, size estimation |
-| **v1.5** | Gauge input, PDF export, yarn quantity calculator |
+| **v1.5** | Gauge input, PDF export, yarn quantity calculator, zoom, tension-based sizing |
 | **v2** | Date range selection, border stitches, aggregation modes |
 | **Someday** | Map picker, multiple locations, community gallery |
 
