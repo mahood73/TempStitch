@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Blanket Pattern Generator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Blanket</h1>
+            <p class="subtitle">Turn a year of weather into a knitting or crochet pattern</p>
+        </header>
+
+        <main>
+            <section class="card" id="location-section">
+                <h2>Location</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" id="latitude" step="0.0001" placeholder="e.g. 51.5074" min="-90" max="90">
+                    </div>
+                    <div class="form-group">
+                        <label for="longitude">Longitude</label>
+                        <input type="number" id="longitude" step="0.0001" placeholder="e.g. -0.1278" min="-180" max="180">
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button id="geo-location-btn" class="btn btn-secondary" type="button">Use My Location</button>
+                    <button id="fetch-weather-btn" class="btn btn-primary" type="button">Generate Pattern</button>
+                </div>
+                <div id="location-status" class="status" aria-live="polite"></div>
+            </section>
+
+            <section class="card" id="settings-section">
+                <h2>Settings</h2>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label for="temp-unit">Temperature Unit</label>
+                        <select id="temp-unit">
+                            <option value="celsius">Celsius (°C)</option>
+                            <option value="fahrenheit">Fahrenheit (°F)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stitch-count">Stitches per Row</label>
+                        <input type="number" id="stitch-count" value="50" min="10" max="200">
+                        <small>Default: 50 (scarf width)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="colour-increment">Colour Increment (°)</label>
+                        <input type="number" id="colour-increment" value="5" min="1" max="20" step="1">
+                        <small>Temperature step per colour</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="colour-key-min">Colour Key Min (°)</label>
+                        <input type="number" id="colour-key-min" step="1">
+                        <small>Auto-calculated from data</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="colour-key-max">Colour Key Max (°)</label>
+                        <input type="number" id="colour-key-max" step="1">
+                        <small>Auto-calculated from data</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="colour-palette">Colour Palette</label>
+                        <select id="colour-palette">
+                            <option value="default">Temperature Gradient</option>
+                            <option value="warm">Warm Tones</option>
+                            <option value="cool">Cool Tones</option>
+                            <option value="pastel">Pastels</option>
+                            <option value="monochrome">Monochrome</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" id="pattern-section" style="display: none;">
+                <div class="pattern-header">
+                    <h2>Your Design</h2>
+                    <button id="download-image-btn" class="btn btn-secondary" type="button">Download Image</button>
+                </div>
+                <div id="pattern-stats" class="stats-panel"></div>
+                <div class="pattern-scroll">
+                    <div id="pattern-preview" class="pattern-grid"></div>
+                </div>
+                <div id="colour-key" class="colour-key"></div>
+                <div class="instructions-section">
+                    <h3>Pattern Instructions</h3>
+                    <div id="pattern-instructions" class="instructions"></div>
+                </div>
+            </section>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Fetching weather data...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <p>Weather data from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> &mdash; each row = one day of max temperature</p>
+        </footer>
+    </div>
+
+    <script src="js/location.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/color-mapper.js"></script>
+    <script src="js/pattern.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
