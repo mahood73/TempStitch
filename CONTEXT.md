@@ -22,6 +22,7 @@ Core functionality, polish, and deployment.
 - Add favicon (#27)
 - Select Celsius / Fahrenheit (#29)
 - Knit / crochet toggle (#30)
+- UK / US terminology toggle (#32)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
