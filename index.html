@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Blanket Pattern Generator</title>
+    <title>TempStitch</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Weather Blanket</h1>
+            <h1>TempStitch</h1>
             <p class="subtitle">Turn a year of weather into a knitting or crochet pattern</p>
         </header>
 
@@ -26,11 +26,7 @@
                         <input type="number" id="longitude" step="0.0001" placeholder="e.g. -0.1278" min="-180" max="180">
                     </div>
                 </div>
-                <div class="button-row">
-                    <button id="geo-location-btn" class="btn btn-secondary" type="button">Use My Location</button>
-                    <button id="fetch-weather-btn" class="btn btn-primary" type="button">Generate Pattern</button>
-                </div>
-                <div id="location-status" class="status" aria-live="polite"></div>
+                <button id="geo-location-btn" class="btn btn-ghost" type="button">Use My Location</button>
             </section>
 
             <section class="card" id="settings-section">
@@ -46,22 +42,6 @@
                     <div class="form-group">
                         <label for="stitch-count">Stitches per Row</label>
                         <input type="number" id="stitch-count" value="50" min="10" max="200">
-                        <small>Default: 50 (scarf width)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="colour-increment">Colour Increment (°)</label>
-                        <input type="number" id="colour-increment" value="5" min="1" max="20" step="1">
-                        <small>Temperature step per colour</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="colour-key-min">Colour Key Min (°)</label>
-                        <input type="number" id="colour-key-min" step="1">
-                        <small>Auto-calculated from data</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="colour-key-max">Colour Key Max (°)</label>
-                        <input type="number" id="colour-key-max" step="1">
-                        <small>Auto-calculated from data</small>
                     </div>
                     <div class="form-group">
                         <label for="colour-palette">Colour Palette</label>
@@ -74,6 +54,29 @@
                         </select>
                     </div>
                 </div>
+
+                <details class="advanced-toggle">
+                    <summary>Advanced Options</summary>
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="colour-increment">Colour Increment (°)</label>
+                            <input type="number" id="colour-increment" value="5" min="1" max="20" step="1">
+                            <small>Temperature step per colour</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="colour-key-min">Colour Key Min (°)</label>
+                            <input type="number" id="colour-key-min" step="1">
+                            <small>Auto-calculated from data</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="colour-key-max">Colour Key Max (°)</label>
+                            <input type="number" id="colour-key-max" step="1">
+                            <small>Auto-calculated from data</small>
+                        </div>
+                    </div>
+                </details>
+
+                <button id="fetch-weather-btn" class="btn btn-primary btn-large" type="button">Generate Design</button>
             </section>
 
             <section class="card" id="pattern-section" style="display: none;">
