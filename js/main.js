@@ -16,6 +16,7 @@
         colourKeyMin: $('colour-key-min'),
         colourKeyMax: $('colour-key-max'),
         palette: $('colour-palette'),
+        settingsSection: $('settings-section'),
         patternSection: $('pattern-section'),
         patternPreview: $('pattern-preview'),
         patternStats: $('pattern-stats'),
@@ -158,6 +159,7 @@
             Pattern.renderInstructions(currentPattern, els.patternInstructions);
 
             els.patternSection.style.display = 'block';
+            document.querySelector('main').classList.add('has-pattern');
             els.patternSection.classList.remove('pattern-animate');
             void els.patternSection.offsetWidth;
             els.patternSection.classList.add('pattern-animate');
@@ -166,6 +168,7 @@
             if (!hasGenerated) {
                 hasGenerated = true;
                 els.fetchBtn.textContent = 'Update Blanket';
+                els.settingsSection.querySelector('h2').textContent = 'Edit your blanket';
             }
 
             setStatus(`Design generated: ${result.meta.latitude.toFixed(2)}, ${result.meta.longitude.toFixed(2)}`, 'success');

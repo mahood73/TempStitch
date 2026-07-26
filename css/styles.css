@@ -61,6 +61,11 @@ header h1 {
 
 /* Cards */
 
+main {
+    display: flex;
+    flex-direction: column;
+}
+
 .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -75,6 +80,28 @@ header h1 {
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text);
+}
+
+/* Layout reorder: preview wins after generation */
+
+main.has-pattern #location-section {
+    order: 3;
+}
+
+main.has-pattern #settings-section {
+    order: 4;
+}
+
+main.has-pattern #pattern-section {
+    order: 1;
+}
+
+main.has-pattern #loading {
+    order: 2;
+}
+
+main.has-pattern #error {
+    order: 2;
 }
 
 /* Forms */
