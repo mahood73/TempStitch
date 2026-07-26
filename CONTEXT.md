@@ -23,6 +23,13 @@ Core functionality, polish, and deployment.
 - Select Celsius / Fahrenheit (#29)
 - Knit / crochet toggle (#30)
 - UK / US terminology toggle (#32)
+- Preview should win — reorder layout (#33)
+- Simplify location — hide lat/long (#34)
+- Improve 'Use my location' button (#35)
+- Update heading for SEO (#36)
+- Rename buttons and labels (#37)
+- Fade-in animation on preview (#38)
+- Show row counts per colour (#39)
 
 ### v1.5 — feature additions before v2
 - Gauge/tension swatch input (#1)
