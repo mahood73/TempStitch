@@ -186,6 +186,7 @@
             els.lat.value = loc.lat.toFixed(4);
             els.lon.value = loc.lon.toFixed(4);
             Location.save(loc.lat, loc.lon);
+            els.searchInput.value = 'Current location';
             setStatus('Location set', 'success');
         } catch (err) {
             setStatus(err.message, 'error');
