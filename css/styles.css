@@ -373,10 +373,19 @@ main.has-pattern #error {
 }
 
 .stats-panel {
+    margin-bottom: 1.25rem;
+}
+
+.stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.stats-size {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 50%;
 }
 
 .stat-card {
@@ -671,8 +680,13 @@ footer a:hover {
         grid-template-columns: 1fr;
     }
 
-    .stats-panel {
+    .stats-row {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-size {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
     }
 
     .pattern-header {

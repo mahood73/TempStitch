@@ -38,6 +38,8 @@ const Pattern = (() => {
             maxTemp: Math.max(...temps),
             avgTemp: Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10,
             totalDays: rows.length,
+            widthInches: Math.round((stitchCount / 4.5) * 10) / 10,
+            heightInches: Math.round((rows.length / 6) * 10) / 10,
         };
 
         const unitSymbol = options.tempUnit === 'fahrenheit' ? '°F' : '°C';
@@ -87,21 +89,33 @@ const Pattern = (() => {
 
     function renderStats(stats, container, unit = '°') {
         container.innerHTML = `
-            <div class="stat-card">
-                <div class="stat-value">${stats.minTemp}${unit}</div>
-                <div class="stat-label">Coldest</div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value">${stats.minTemp}${unit}</div>
+                    <div class="stat-label">Coldest</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.maxTemp}${unit}</div>
+                    <div class="stat-label">Warmest</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.avgTemp}${unit}</div>
+                    <div class="stat-label">Average</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalDays}</div>
+                    <div class="stat-label">Days</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">${stats.maxTemp}${unit}</div>
-                <div class="stat-label">Warmest</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${stats.avgTemp}${unit}</div>
-                <div class="stat-label">Average</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${stats.totalDays}</div>
-                <div class="stat-label">Days</div>
+            <div class="stats-row stats-size">
+                <div class="stat-card">
+                    <div class="stat-value">${stats.widthInches}"</div>
+                    <div class="stat-label">Width</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.heightInches}"</div>
+                    <div class="stat-label">Height</div>
+                </div>
             </div>
         `;
     }
