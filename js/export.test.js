@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { composeImageFilename, composeInstructionsText } from './export.js';
+import { composeImageFilename, composeImagePlan, composeInstructionsFilename, composeInstructionsText } from './export.js';
 import { generate } from './pattern.js';
 import { createDateRange, createWeatherRequest } from './weather-dataset.js';
 
@@ -26,8 +26,8 @@ function mockProject(overrides = {}) {
             measurement: 'temperature_2m_max',
             temperatureUnit: overrides.tempUnit || 'celsius',
             timezone: 'GMT',
-            latitude: overrides.lat ?? 51.5,
-            longitude: overrides.lon ?? -0.1,
+            latitude: overrides.providerLat ?? overrides.lat ?? 51.5,
+            longitude: overrides.providerLon ?? overrides.lon ?? -0.1,
             requestedDateRange: dateRange,
             returnedDateRange: dateRange,
         },
@@ -61,11 +61,51 @@ describe('composeImageFilename', () => {
     });
 });
 
+describe('composeInstructionsFilename', () => {
+    it('uses the authoritative project date range', () => {
+        assert.equal(composeInstructionsFilename(mockProject()), 'tempstitch-pattern-2024-01-01-to-2024-01-03.txt');
+    });
+});
+
+describe('composeImagePlan', () => {
+    it('includes authoritative location, date range, and unit metadata', () => {
+        const plan = composeImagePlan(mockProject({
+            displayName: 'London, England, GB',
+            lat: 51.5,
+            lon: -0.1,
+            providerLat: 51.5074,
+            providerLon: -0.1278,
+            tempUnit: 'fahrenheit',
+        }));
+        assert.deepEqual(plan.metadata, [
+            'Selected location: London, England, GB',
+            'Selected coordinates: 51.5, -0.1',
+            'Provider-resolved coordinates: 51.5074, -0.1278',
+            'Date range: 2024-01-01 to 2024-01-03',
+            'Temperature unit: Fahrenheit (°F)',
+            'Stitches per row: 50',
+        ]);
+        assert.equal(plan.minLabel, '5°F');
+        assert.equal(plan.maxLabel, '15°F');
+        assert.equal(plan.width, 480);
+        assert.equal(plan.height, 236);
+    });
+});
+
 describe('composeInstructionsText', () => {
     it('starts with title and separator', () => {
         const project = mockProject();
         const text = composeInstructionsText(project);
         assert.ok(text.startsWith('TempStitch Pattern\n=================='));
+    });
+
+    it('contains authoritative location, coordinates, date range, and temperature unit', () => {
+        const text = composeInstructionsText(mockProject({ displayName: 'London, England, GB', lat: 51.5, lon: -0.1, tempUnit: 'fahrenheit' }));
+        assert.ok(text.includes('Selected location: London, England, GB'));
+        assert.ok(text.includes('Selected coordinates: 51.5, -0.1'));
+        assert.ok(text.includes('Provider-resolved coordinates: 51.5, -0.1'));
+        assert.ok(text.includes('Date range: 2024-01-01 to 2024-01-03'));
+        assert.ok(text.includes('Temperature unit: Fahrenheit (°F)'));
     });
 
     it('contains craft type from project settings', () => {

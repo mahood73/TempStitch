@@ -42,6 +42,20 @@ describe('Project generation', () => {
         assert.strictEqual(project.dataset, dataset);
     });
 
+    it('returns a deeply immutable Project aggregate while preserving dataset identity', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset);
+        assert.strictEqual(project.dataset, dataset);
+        assert.ok(Object.isFrozen(project));
+        assert.ok(Object.isFrozen(project.dataset));
+        assert.ok(Object.isFrozen(project.dataset.request.location));
+        assert.ok(Object.isFrozen(project.dataset.observations[0]));
+        assert.ok(Object.isFrozen(project.settings));
+        assert.ok(Object.isFrozen(project.design.bands));
+        assert.ok(Object.isFrozen(project.pattern.rows));
+        assert.ok(Object.isFrozen(project.pattern.instructions));
+    });
+
     it('settings snapshot contains form values', () => {
         const dataset = mockDataset([5, 10, 15]);
         const project = generate(dataset, { craftType: 'crochet', stitchCount: 80, paletteName: 'warm', numColours: 6 });

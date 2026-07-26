@@ -1,6 +1,55 @@
+const STITCH_WIDTH = 8;
+const ROW_HEIGHT = 4;
+const PADDING = 40;
+const KEY_HEIGHT = 30;
+
+function temperatureUnitLabel(tempUnit) {
+    return tempUnit === 'fahrenheit' ? 'Fahrenheit (°F)' : 'Celsius (°C)';
+}
+
+function authorityMetadata(project) {
+    const { location, dateRange, tempUnit } = project.dataset.request;
+    const { latitude, longitude } = project.dataset.provenance;
+    return [
+        `Selected location: ${location.displayName}`,
+        `Selected coordinates: ${location.lat}, ${location.lon}`,
+        `Provider-resolved coordinates: ${latitude}, ${longitude}`,
+        `Date range: ${dateRange.start} to ${dateRange.end}`,
+        `Temperature unit: ${temperatureUnitLabel(tempUnit)}`,
+        `Stitches per row: ${project.settings.stitchCount}`,
+    ];
+}
+
 export function composeImageFilename(project) {
     const range = project.dataset.request.dateRange;
     return `tempstitch-${range.start}-to-${range.end}.png`;
+}
+
+export function composeInstructionsFilename(project) {
+    const range = project.dataset.request.dateRange;
+    return `tempstitch-pattern-${range.start}-to-${range.end}.txt`;
+}
+
+export function composeImagePlan(project) {
+    const unitSymbol = project.design.tempUnit === 'fahrenheit' ? '°F' : '°C';
+    const metadata = authorityMetadata(project);
+    const headerHeight = 30 + metadata.length * 14;
+    const width = project.settings.stitchCount * STITCH_WIDTH + PADDING * 2;
+    const height = headerHeight + project.pattern.rows.length * ROW_HEIGHT + KEY_HEIGHT + PADDING * 2;
+
+    return {
+        filename: composeImageFilename(project),
+        title: 'TempStitch Design',
+        metadata,
+        rows: project.pattern.rows,
+        colourKey: project.design.colourKey,
+        minLabel: `${project.design.min}${unitSymbol}`,
+        maxLabel: `${project.design.max}${unitSymbol}`,
+        stitchCount: project.settings.stitchCount,
+        headerHeight,
+        width,
+        height,
+    };
 }
 
 export function composeInstructionsText(project) {
@@ -8,8 +57,8 @@ export function composeInstructionsText(project) {
         'TempStitch Pattern',
         '==================',
         '',
+        ...authorityMetadata(project),
         `Craft: ${project.settings.craftType === 'knit' ? 'Knitting' : 'Crochet'}`,
-        `Stitches per row: ${project.settings.stitchCount}`,
         `Colours: ${project.settings.numColours}`,
         '',
         'Colour Key',
@@ -23,59 +72,53 @@ export function composeInstructionsText(project) {
 }
 
 export function downloadImage(project) {
-    const stitchWidth = 8;
-    const rowHeight = 4;
-    const padding = 40;
-    const keyHeight = 30;
-    const headerHeight = 60;
-
-    const width = project.settings.stitchCount * stitchWidth + padding * 2;
-    const height = headerHeight + project.pattern.rows.length * rowHeight + keyHeight + padding * 2;
+    const plan = composeImagePlan(project);
 
     const canvas = document.createElement('canvas');
-    canvas.width = width * 2;
-    canvas.height = height * 2;
+    canvas.width = plan.width * 2;
+    canvas.height = plan.height * 2;
     const ctx = canvas.getContext('2d');
     ctx.scale(2, 2);
 
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, plan.width, plan.height);
 
     ctx.fillStyle = '#1c1917';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('TempStitch Design', width / 2, 25);
+    ctx.fillText(plan.title, plan.width / 2, 20);
 
     ctx.font = '10px sans-serif';
     ctx.fillStyle = '#78716c';
-    const range = project.dataset.request.dateRange;
-    ctx.fillText(`${range.start} to ${range.end}  |  ${project.settings.stitchCount} stitches/row`, width / 2, 42);
+    plan.metadata.forEach((line, index) => {
+        ctx.fillText(line, plan.width / 2, 36 + index * 14);
+    });
 
-    let y = headerHeight;
-    project.pattern.rows.forEach(row => {
+    let y = plan.headerHeight;
+    plan.rows.forEach(row => {
         for (let s = 0; s < row.stitches; s++) {
             ctx.fillStyle = row.colour;
-            ctx.fillRect(padding + s * stitchWidth, y, stitchWidth - 1, rowHeight - 1);
+            ctx.fillRect(PADDING + s * STITCH_WIDTH, y, STITCH_WIDTH - 1, ROW_HEIGHT - 1);
         }
-        y += rowHeight;
+        y += ROW_HEIGHT;
     });
 
     const keyY = y + 10;
-    const blockWidth = (width - padding * 2) / project.design.colourKey.length;
-    project.design.colourKey.forEach((entry, i) => {
+    const blockWidth = (plan.width - PADDING * 2) / plan.colourKey.length;
+    plan.colourKey.forEach((entry, i) => {
         ctx.fillStyle = entry.colour;
-        ctx.fillRect(padding + i * blockWidth, keyY, blockWidth, 12);
+        ctx.fillRect(PADDING + i * blockWidth, keyY, blockWidth, 12);
     });
 
     ctx.fillStyle = '#78716c';
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`${project.design.min}°`, padding, keyY + 24);
+    ctx.fillText(plan.minLabel, PADDING, keyY + 24);
     ctx.textAlign = 'right';
-    ctx.fillText(`${project.design.max}°`, width - padding, keyY + 24);
+    ctx.fillText(plan.maxLabel, plan.width - PADDING, keyY + 24);
 
     const link = document.createElement('a');
-    link.download = composeImageFilename(project);
+    link.download = plan.filename;
     link.href = canvas.toDataURL('image/png');
     link.click();
 }
@@ -83,7 +126,7 @@ export function downloadImage(project) {
 export function downloadInstructions(project) {
     const blob = new Blob([composeInstructionsText(project)], { type: 'text/plain' });
     const link = document.createElement('a');
-    link.download = 'tempstitch-pattern.txt';
+    link.download = composeInstructionsFilename(project);
     link.href = URL.createObjectURL(blob);
     link.click();
     URL.revokeObjectURL(link.href);

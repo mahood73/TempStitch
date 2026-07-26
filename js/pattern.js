@@ -1,5 +1,12 @@
 import { calculateSmartDefaults, buildColourKey, getColor } from './color-mapper.js';
 
+function deepFreeze(value, seen = new Set()) {
+    if (value === null || typeof value !== 'object' || seen.has(value)) return value;
+    seen.add(value);
+    Object.values(value).forEach((child) => deepFreeze(child, seen));
+    return Object.freeze(value);
+}
+
 export function generate(dataset, options = {}) {
     const {
         craftType = 'knit',
@@ -69,12 +76,28 @@ export function generate(dataset, options = {}) {
         instructions.push('Fasten off.');
     }
 
-    return {
+    return deepFreeze({
         dataset,
         settings: { craftType, terminology, stitchCount, paletteName, numColours, colourKeyMin, colourKeyMax },
         design: { bands, colourKey, stats, min, max, tempUnit },
         pattern: { rows, instructions },
-    };
+    });
+}
+
+export function renderProject(project, containers) {
+    const staged = Object.fromEntries(
+        Object.entries(containers).map(([name, container]) => [name, container.cloneNode(false)])
+    );
+    const unit = project.design.tempUnit === 'fahrenheit' ? '°F' : '°C';
+
+    renderStats(project.design.stats, staged.stats, unit);
+    renderGrid(project.design.bands, staged.grid);
+    renderColourKey(project.design.colourKey, staged.colourKey, project.design.bands);
+    renderInstructions(project.pattern, staged.instructions);
+
+    Object.entries(containers).forEach(([name, container]) => {
+        container.replaceChildren(...staged[name].childNodes);
+    });
 }
 
 export function renderGrid(bands, container) {

@@ -1,7 +1,8 @@
 import { getSaved, save, validate, requestBrowserLocation, search } from './location.js';
 import { fetchWeather } from './weather.js';
 import { dateRangeFromYear, createWeatherRequest, WeatherError } from './weather-dataset.js';
-import { generate, renderGrid, renderStats, renderColourKey, renderInstructions } from './pattern.js';
+import { generate, renderProject } from './pattern.js';
+import { createProjectStore } from './project-state.js';
 import { downloadImage, downloadInstructions } from './export.js';
 
 const $ = (id) => document.getElementById(id);
@@ -36,7 +37,15 @@ const els = {
     downloadInstructionsBtn: $('download-instructions-btn'),
 };
 
-let currentProject = null;
+const projectStore = createProjectStore((project) => {
+    renderProject(project, {
+        stats: els.patternStats,
+        grid: els.patternPreview,
+        colourKey: els.colourKey,
+        instructions: els.patternInstructions,
+    });
+});
+
 let hasGenerated = false;
 let searchTimeout = null;
 
@@ -162,14 +171,10 @@ async function generatePattern() {
             colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
         };
 
-        currentProject = generate(dataset, options);
+        const project = generate(dataset, options);
+        const committedProject = projectStore.commit(project);
 
         hideLoading();
-
-        renderStats(currentProject.design.stats, els.patternStats, currentProject.design.tempUnit === 'fahrenheit' ? '°F' : '°C');
-        renderGrid(currentProject.design.bands, els.patternPreview);
-        renderColourKey(currentProject.design.colourKey, els.colourKey, currentProject.design.bands);
-        renderInstructions(currentProject.pattern, els.patternInstructions);
 
         els.patternSection.style.display = 'block';
         document.querySelector('main').classList.add('has-pattern');
@@ -184,10 +189,15 @@ async function generatePattern() {
             els.settingsSection.querySelector('h2').textContent = 'Edit your blanket';
         }
 
-        setStatus(`Design generated: ${dataset.provenance.latitude.toFixed(2)}, ${dataset.provenance.longitude.toFixed(2)}`, 'success');
+        const location = committedProject.dataset.request.location;
+        const source = committedProject.dataset.provenance;
+        setStatus(
+            `Design generated for ${location.displayName} (weather source: ${source.latitude.toFixed(2)}, ${source.longitude.toFixed(2)})`,
+            'success'
+        );
     } catch (err) {
         hideLoading();
-        if (currentProject) {
+        if (projectStore.getProject()) {
             showError(weatherErrorMessage(err) + ' The previous design is unchanged.');
         } else {
             showError(weatherErrorMessage(err));
@@ -242,11 +252,13 @@ function init() {
     els.geoBtn.addEventListener('click', handleGeoLocation);
     els.fetchBtn.addEventListener('click', generatePattern);
     els.downloadBtn.addEventListener('click', () => {
-        if (currentProject) downloadImage(currentProject);
+        const project = projectStore.getProject();
+        if (project) downloadImage(project);
     });
 
     els.downloadInstructionsBtn.addEventListener('click', () => {
-        if (currentProject) downloadInstructions(currentProject);
+        const project = projectStore.getProject();
+        if (project) downloadInstructions(project);
     });
 
     els.stitchPreset.addEventListener('change', () => {

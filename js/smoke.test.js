@@ -7,6 +7,7 @@ import * as WeatherDataset from './weather-dataset.js';
 import * as ColorMapper from './color-mapper.js';
 import * as Pattern from './pattern.js';
 import * as Export from './export.js';
+import * as ProjectState from './project-state.js';
 
 describe('Module imports', () => {
     it('location.js exports expected functions', () => {
@@ -45,6 +46,7 @@ describe('Module imports', () => {
 
     it('pattern.js exports expected functions', () => {
         assert.equal(typeof Pattern.generate, 'function');
+        assert.equal(typeof Pattern.renderProject, 'function');
         assert.equal(typeof Pattern.renderGrid, 'function');
         assert.equal(typeof Pattern.renderStats, 'function');
         assert.equal(typeof Pattern.renderColourKey, 'function');
@@ -53,8 +55,14 @@ describe('Module imports', () => {
 
     it('export.js exports expected functions', () => {
         assert.equal(typeof Export.composeImageFilename, 'function');
+        assert.equal(typeof Export.composeInstructionsFilename, 'function');
+        assert.equal(typeof Export.composeImagePlan, 'function');
         assert.equal(typeof Export.composeInstructionsText, 'function');
         assert.equal(typeof Export.downloadImage, 'function');
         assert.equal(typeof Export.downloadInstructions, 'function');
+    });
+
+    it('project-state.js exports the Project store seam', () => {
+        assert.equal(typeof ProjectState.createProjectStore, 'function');
     });
 });
