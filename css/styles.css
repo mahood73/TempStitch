@@ -554,10 +554,20 @@ main.has-pattern #error {
 
 /* Instructions */
 
-.instructions-section h3 {
-    font-size: 0.95rem;
-    font-weight: 600;
+.instructions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.625rem;
+}
+
+.instructions-header h3 {
+    margin-bottom: 0;
+}
+
+.btn-small {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
 }
 
 .instructions {

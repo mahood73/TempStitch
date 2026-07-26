@@ -57,5 +57,31 @@ const Export = (() => {
         link.click();
     }
 
-    return { downloadImage };
+    function downloadInstructions(pattern) {
+        const lines = [
+            'TempStitch Pattern',
+            '==================',
+            '',
+            `Craft: ${pattern.options.craftType === 'knit' ? 'Knitting' : 'Crochet'}`,
+            `Stitches per row: ${pattern.options.stitchCount}`,
+            `Colours: ${pattern.options.numColours}`,
+            '',
+            'Colour Key',
+            '----------',
+            ...pattern.colourKey.map(e => `C${e.index} ${e.name}: ${e.label}`),
+            '',
+            'Instructions',
+            '------------',
+            ...pattern.instructions,
+        ];
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.download = 'tempstitch-pattern.txt';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    return { downloadImage, downloadInstructions };
 })();

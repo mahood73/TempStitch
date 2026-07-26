@@ -28,6 +28,7 @@
         loading: $('loading'),
         error: $('error'),
         downloadBtn: $('download-image-btn'),
+        downloadInstructionsBtn: $('download-instructions-btn'),
     };
 
     let currentPattern = null;
@@ -232,6 +233,10 @@
         els.fetchBtn.addEventListener('click', generatePattern);
         els.downloadBtn.addEventListener('click', () => {
             if (currentPattern) Export.downloadImage(currentPattern);
+        });
+
+        els.downloadInstructionsBtn.addEventListener('click', () => {
+            if (currentPattern) Export.downloadInstructions(currentPattern);
         });
 
         els.stitchPreset.addEventListener('change', () => {
