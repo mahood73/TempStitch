@@ -1,6 +1,7 @@
 const Pattern = (() => {
     function generate(weatherData, options = {}) {
         const {
+            craftType = 'knit',
             stitchCount = 50,
             paletteName = 'default',
             numColours = 10,
@@ -37,19 +38,33 @@ const Pattern = (() => {
             totalDays: rows.length,
         };
 
-        const instructions = rows.map((row, i) => {
-            const dateObj = new Date(row.date + 'T00:00:00');
-            const month = dateObj.toLocaleString('en-GB', { month: 'short' });
-            const day = dateObj.getDate();
-            return `Row ${i + 1} (${month} ${day}): ${row.stitches} stitches, C${row.colourIndex} ${row.colourName} (${row.temp}°)`;
-        });
+        const instructions = [];
+        if (craftType === 'knit') {
+            instructions.push(`Cast on ${stitchCount} stitches.`);
+            rows.forEach((row, i) => {
+                const dateObj = new Date(row.date + 'T00:00:00');
+                const month = dateObj.toLocaleString('en-GB', { month: 'short' });
+                const day = dateObj.getDate();
+                instructions.push(`Row ${i + 1} (${month} ${day}): Knit across in C${row.colourIndex} ${row.colourName} (${row.temp}°)`);
+            });
+            instructions.push('Bind off.');
+        } else {
+            instructions.push(`Chain ${stitchCount + 1}.`);
+            rows.forEach((row, i) => {
+                const dateObj = new Date(row.date + 'T00:00:00');
+                const month = dateObj.toLocaleString('en-GB', { month: 'short' });
+                const day = dateObj.getDate();
+                instructions.push(`Row ${i + 1} (${month} ${day}): Double crochet in each stitch across in C${row.colourIndex} ${row.colourName} (${row.temp}°)`);
+            });
+            instructions.push('Fasten off.');
+        }
 
         return {
             rows,
             stats,
             colourKey,
             instructions,
-            options: { stitchCount, paletteName, numColours, min, max },
+            options: { craftType, stitchCount, paletteName, numColours, min, max },
         };
     }
 

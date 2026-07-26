@@ -9,6 +9,7 @@
         searchResults: $('search-results'),
         fetchBtn: $('fetch-weather-btn'),
         status: $('location-status'),
+        craftType: $('craft-type'),
         tempUnit: $('temp-unit'),
         stitchCount: $('stitch-count'),
         yearSelect: $('year-select'),
@@ -141,6 +142,7 @@
             }
 
             const options = {
+                craftType: els.craftType.value,
                 stitchCount: parseInt(els.stitchCount.value) || 50,
                 paletteName: els.palette.value,
                 numColours: parseInt(els.numColours.value) || 10,
