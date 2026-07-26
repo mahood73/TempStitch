@@ -500,9 +500,9 @@ main.has-pattern #error {
 }
 
 .colour-key-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.3rem 0.5rem;
     margin-top: 0.5rem;
     padding-top: 0.5rem;
     border-top: 1px solid var(--border);
@@ -513,6 +513,7 @@ main.has-pattern #error {
     align-items: center;
     gap: 0.3rem;
     font-size: 0.7rem;
+    padding: 0.2rem 0;
 }
 
 .colour-key-swatch {
