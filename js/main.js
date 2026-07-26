@@ -17,6 +17,7 @@
         colourKeyMin: $('colour-key-min'),
         colourKeyMax: $('colour-key-max'),
         palette: $('colour-palette'),
+        terminology: $('terminology'),
         settingsSection: $('settings-section'),
         patternSection: $('pattern-section'),
         patternPreview: $('pattern-preview'),
@@ -143,6 +144,7 @@
 
             const options = {
                 craftType: els.craftType.value,
+                terminology: els.terminology.value,
                 stitchCount: parseInt(els.stitchCount.value) || 50,
                 paletteName: els.palette.value,
                 numColours: parseInt(els.numColours.value) || 10,
