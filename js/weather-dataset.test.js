@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+    DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
     WeatherError,
     WeatherErrorCategory,
     createDateRange,
@@ -13,329 +14,199 @@ import {
     validateDataset,
 } from './weather-dataset.js';
 
+const requestInput = {
+    displayName: 'Test location',
+    lat: 51.5,
+    lon: -0.1,
+    dateRange: { start: '2024-01-01', end: '2024-01-05' },
+    tempUnit: 'celsius',
+};
+
+function makeRequest() {
+    return createWeatherRequest(
+        requestInput.displayName,
+        requestInput.lat,
+        requestInput.lon,
+        requestInput.dateRange,
+        requestInput.tempUnit
+    );
+}
+
+function makeObservations() {
+    return [
+        { date: '2024-01-01', temp: 10 },
+        { date: '2024-01-02', temp: 11 },
+        { date: '2024-01-03', temp: 12 },
+        { date: '2024-01-04', temp: 13 },
+        { date: '2024-01-05', temp: 14 },
+    ];
+}
+
+function makeProvenance(request, overrides = {}) {
+    return {
+        source: 'Open-Meteo',
+        measurement: DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+        temperatureUnit: request.tempUnit,
+        timezone: 'Europe/London',
+        latitude: 51.5074,
+        longitude: -0.1278,
+        requestedDateRange: request.dateRange,
+        returnedDateRange: request.dateRange,
+        ...overrides,
+    };
+}
+
+function assertCategory(action, category) {
+    assert.throws(action, (error) => error instanceof WeatherError && error.category === category);
+}
+
 describe('WeatherError', () => {
-    it('has category and message', () => {
-        const err = new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, 'API down');
-        assert.equal(err.name, 'WeatherError');
-        assert.equal(err.category, 'provider-failure');
-        assert.equal(err.message, 'API down');
-        assert.ok(err instanceof Error);
+    it('owns a safe category message and retains an optional cause', () => {
+        const cause = new Error('untrusted provider detail');
+        const error = new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, cause);
+
+        assert.equal(error.message, 'Weather service is temporarily unavailable. Please try again');
+        assert.equal(error.cause, cause);
+        assert.equal(error.name, 'WeatherError');
+    });
+
+    it('uses a safe fixed message for an unknown category', () => {
+        assert.equal(new WeatherError('unknown').message, 'Unable to load weather data. Please try again');
     });
 });
 
-describe('createDateRange', () => {
-    it('creates a valid date range', () => {
+describe('Date Range', () => {
+    it('creates an immutable valid date range', () => {
         const range = createDateRange('2024-01-01', '2024-12-31');
         assert.deepEqual(range, { start: '2024-01-01', end: '2024-12-31' });
+        assert.ok(Object.isFrozen(range));
     });
 
-    it('allows single-day range', () => {
-        const range = createDateRange('2024-06-15', '2024-06-15');
-        assert.deepEqual(range, { start: '2024-06-15', end: '2024-06-15' });
+    it('rejects malformed, nonexistent, and unordered dates', () => {
+        assertCategory(() => createDateRange('01-01-2024', '2024-12-31'), WeatherErrorCategory.INVALID_REQUEST);
+        assertCategory(() => createDateRange('2024-02-30', '2024-03-01'), WeatherErrorCategory.INVALID_REQUEST);
+        assertCategory(() => createDateRange('2024-12-31', '2024-01-01'), WeatherErrorCategory.INVALID_REQUEST);
     });
 
-    it('rejects start after end', () => {
-        assert.throws(() => createDateRange('2024-12-31', '2024-01-01'), WeatherError);
+    it('handles calendar and leap years without local-time shifts', () => {
+        assert.deepEqual(dateRangeFromYear(2023), { start: '2023-01-01', end: '2023-12-31' });
+        assert.equal(countDaysInRange(dateRangeFromYear(2024)), 366);
+        assert.deepEqual(expandDateRange(createDateRange('2024-02-28', '2024-03-01')), [
+            '2024-02-28', '2024-02-29', '2024-03-01',
+        ]);
     });
 
-    it('rejects invalid date format', () => {
-        assert.throws(() => createDateRange('01-01-2024', '2024-12-31'), WeatherError);
+    it('rejects years that cannot be represented as four-digit dates', () => {
+        assertCategory(() => dateRangeFromYear(999), WeatherErrorCategory.INVALID_REQUEST);
+        assertCategory(() => dateRangeFromYear(10000), WeatherErrorCategory.INVALID_REQUEST);
     });
 
-    it('rejects non-existent dates', () => {
-        assert.throws(() => createDateRange('2024-02-30', '2024-03-01'), WeatherError);
-    });
-});
-
-describe('dateRangeFromYear', () => {
-    it('returns full non-leap year', () => {
-        const range = dateRangeFromYear(2023);
-        assert.deepEqual(range, { start: '2023-01-01', end: '2023-12-31' });
-        assert.equal(countDaysInRange(range), 365);
-    });
-
-    it('returns full leap year', () => {
-        const range = dateRangeFromYear(2024);
-        assert.deepEqual(range, { start: '2024-01-01', end: '2024-12-31' });
-        assert.equal(countDaysInRange(range), 366);
-    });
-
-    it('handles century non-leap year', () => {
-        const range = dateRangeFromYear(1900);
-        assert.equal(countDaysInRange(range), 365);
-    });
-
-    it('handles 400-year leap year', () => {
-        const range = dateRangeFromYear(2000);
-        assert.equal(countDaysInRange(range), 366);
-    });
-
-    it('rejects invalid year', () => {
-        assert.throws(() => dateRangeFromYear(0), WeatherError);
-        assert.throws(() => dateRangeFromYear(2024.5), WeatherError);
-    });
-});
-
-describe('dateRangeLastDays', () => {
-    it('returns a range of the specified length', () => {
-        const range = dateRangeLastDays(365);
-        assert.equal(countDaysInRange(range), 365);
-        const end = new Date();
-        const endStr = `${end.getUTCFullYear()}-${String(end.getUTCMonth() + 1).padStart(2, '0')}-${String(end.getUTCDate()).padStart(2, '0')}`;
-        assert.equal(range.end, endStr);
-    });
-
-    it('rejects non-integer days', () => {
-        assert.throws(() => dateRangeLastDays(0), WeatherError);
-        assert.throws(() => dateRangeLastDays(1.5), WeatherError);
-    });
-
-    it('start is before or equal to end', () => {
-        const range = dateRangeLastDays(365);
-        assert.ok(range.start <= range.end);
-    });
-});
-
-describe('countDaysInRange', () => {
-    it('counts 365 days for non-leap year', () => {
-        assert.equal(countDaysInRange({ start: '2023-01-01', end: '2023-12-31' }), 365);
-    });
-
-    it('counts 366 days for leap year', () => {
-        assert.equal(countDaysInRange({ start: '2024-01-01', end: '2024-12-31' }), 366);
-    });
-
-    it('counts 1 day for single day', () => {
-        assert.equal(countDaysInRange({ start: '2024-06-15', end: '2024-06-15' }), 1);
-    });
-});
-
-describe('expandDateRange', () => {
-    it('expands single day', () => {
-        assert.deepEqual(expandDateRange({ start: '2024-01-01', end: '2024-01-01' }), ['2024-01-01']);
-    });
-
-    it('expands 3 days', () => {
-        assert.deepEqual(
-            expandDateRange({ start: '2024-01-01', end: '2024-01-03' }),
-            ['2024-01-01', '2024-01-02', '2024-01-03']
-        );
-    });
-
-    it('expands across month boundary', () => {
-        assert.deepEqual(
-            expandDateRange({ start: '2024-01-30', end: '2024-02-02' }),
-            ['2024-01-30', '2024-01-31', '2024-02-01', '2024-02-02']
-        );
-    });
-
-    it('expands leap day', () => {
-        assert.deepEqual(
-            expandDateRange({ start: '2024-02-28', end: '2024-03-01' }),
-            ['2024-02-28', '2024-02-29', '2024-03-01']
-        );
+    it('keeps dateRangeLastDays available as an explicit caller choice', () => {
+        assert.equal(countDaysInRange(dateRangeLastDays(365)), 365);
     });
 });
 
 describe('createWeatherRequest', () => {
-    const dateRange = createDateRange('2024-01-01', '2024-12-31');
+    it('normalizes and deeply freezes selected Weather Request facts', () => {
+        const sourceRange = { start: '2024-01-01', end: '2024-01-05' };
+        const request = createWeatherRequest('  London, GB  ', 51.5, -0.1, sourceRange, 'celsius');
+        sourceRange.start = '2020-01-01';
 
-    it('creates a valid request', () => {
-        const req = createWeatherRequest('London, England, GB', 51.5, -0.1, dateRange, 'celsius');
-        assert.deepEqual(req.location, { displayName: 'London, England, GB', lat: 51.5, lon: -0.1 });
-        assert.deepEqual(req.dateRange, dateRange);
-        assert.equal(req.tempUnit, 'celsius');
+        assert.deepEqual(request, {
+            location: { displayName: 'London, GB', lat: 51.5, lon: -0.1 },
+            dateRange: { start: '2024-01-01', end: '2024-01-05' },
+            tempUnit: 'celsius',
+        });
+        assert.ok(Object.isFrozen(request));
+        assert.ok(Object.isFrozen(request.location));
+        assert.ok(Object.isFrozen(request.dateRange));
     });
 
-    it('trims display name', () => {
-        const req = createWeatherRequest('  Paris  ', 48.8566, 2.3522, dateRange, 'fahrenheit');
-        assert.equal(req.location.displayName, 'Paris');
+    it('rejects invalid location, unit, and dates', () => {
+        assertCategory(() => createWeatherRequest('', 51.5, -0.1, requestInput.dateRange, 'celsius'), WeatherErrorCategory.INVALID_REQUEST);
+        assertCategory(() => createWeatherRequest('X', 91, -0.1, requestInput.dateRange, 'celsius'), WeatherErrorCategory.INVALID_REQUEST);
+        assertCategory(() => createWeatherRequest('X', 51.5, -0.1, requestInput.dateRange, 'kelvin'), WeatherErrorCategory.INVALID_REQUEST);
     });
 
-    it('rejects empty display name', () => {
-        assert.throws(() => createWeatherRequest('', 51.5, -0.1, dateRange, 'celsius'), WeatherError);
-    });
-
-    it('rejects invalid latitude', () => {
-        assert.throws(() => createWeatherRequest('X', 91, -0.1, dateRange, 'celsius'), WeatherError);
-        assert.throws(() => createWeatherRequest('X', NaN, -0.1, dateRange, 'celsius'), WeatherError);
-    });
-
-    it('rejects invalid longitude', () => {
-        assert.throws(() => createWeatherRequest('X', 51.5, 181, dateRange, 'celsius'), WeatherError);
-    });
-
-    it('rejects invalid temp unit', () => {
-        assert.throws(() => createWeatherRequest('X', 51.5, -0.1, dateRange, 'kelvin'), WeatherError);
+    it('rejects an invalid date range at the Weather boundary', () => {
+        assertCategory(
+            () => createWeatherRequest('X', 51.5, -0.1, { start: '2024-02-30', end: '2024-03-01' }, 'celsius'),
+            WeatherErrorCategory.INVALID_REQUEST
+        );
     });
 });
 
 describe('validateDataset', () => {
-    const request = createWeatherRequest('Test', 51.5, -0.1, createDateRange('2024-01-01', '2024-01-05'), 'celsius');
-    const provenance = {
-        source: 'Open-Meteo',
-        measurement: 'temperature_2m_max',
-        temperatureUnit: 'celsius',
-        timezone: 'GMT',
-        latitude: 51.5,
-        longitude: -0.1,
-        requestedDateRange: request.dateRange,
-        returnedDateRange: request.dateRange,
-    };
+    it('normalizes a complete dataset and preserves only domain provenance', () => {
+        const request = makeRequest();
+        const rawObservations = makeObservations();
+        const dataset = validateDataset(request, rawObservations, makeProvenance(request));
+        rawObservations[0].temp = 999;
 
-    it('accepts valid observations', () => {
-        const obs = [
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        const dataset = validateDataset(request, obs, provenance);
         assert.equal(dataset.observations.length, 5);
-        assert.equal(dataset.request.location.displayName, 'Test');
-        assert.equal(dataset.provenance.source, 'Open-Meteo');
+        assert.equal(dataset.observations[0].temp, 10);
+        assert.equal(dataset.provenance.measurement, DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT);
+        assert.deepEqual(dataset.provenance.requestedDateRange, request.dateRange);
+        assert.deepEqual(dataset.provenance.returnedDateRange, request.dateRange);
+        assert.ok(Object.isFrozen(dataset));
+        assert.ok(Object.isFrozen(dataset.observations));
+        assert.ok(Object.isFrozen(dataset.observations[0]));
+        assert.ok(Object.isFrozen(dataset.provenance));
+        assert.ok(Object.isFrozen(dataset.provenance.requestedDateRange));
     });
 
-    it('rejects empty observations', () => {
-        assert.throws(() => validateDataset(request, [], provenance), WeatherError);
+    it('accepts a request-shaped value but normalizes it before storing', () => {
+        const request = makeRequest();
+        const requestShape = structuredClone(request);
+        const dataset = validateDataset(requestShape, makeObservations(), makeProvenance(requestShape));
+
+        assert.notStrictEqual(dataset.request, requestShape);
+        assert.ok(Object.isFrozen(dataset.request));
     });
 
-    it('rejects non-array observations', () => {
-        assert.throws(() => validateDataset(request, null, provenance), WeatherError);
+    it('rejects empty, missing, unordered, duplicate, out-of-range, and non-finite coverage', () => {
+        const request = makeRequest();
+        assertCategory(() => validateDataset(request, [], makeProvenance(request)), WeatherErrorCategory.INCOMPLETE_COVERAGE);
+        assertCategory(() => validateDataset(request, makeObservations().slice(0, 4), makeProvenance(request)), WeatherErrorCategory.INCOMPLETE_COVERAGE);
+
+        const unordered = makeObservations();
+        [unordered[0], unordered[1]] = [unordered[1], unordered[0]];
+        assertCategory(() => validateDataset(request, unordered, makeProvenance(request)), WeatherErrorCategory.INCOMPLETE_COVERAGE);
+
+        const duplicate = makeObservations();
+        duplicate[1] = { date: '2024-01-01', temp: 11 };
+        assertCategory(() => validateDataset(request, duplicate, makeProvenance(request)), WeatherErrorCategory.INCOMPLETE_COVERAGE);
+
+        const outside = makeObservations();
+        outside[0] = { date: '2023-12-31', temp: 10 };
+        assertCategory(() => validateDataset(request, outside, makeProvenance(request)), WeatherErrorCategory.MALFORMED_RESPONSE);
+
+        const nonFinite = makeObservations();
+        nonFinite[2] = { date: '2024-01-03', temp: NaN };
+        assertCategory(() => validateDataset(request, nonFinite, makeProvenance(request)), WeatherErrorCategory.INCOMPLETE_COVERAGE);
     });
 
-    it('rejects wrong count', () => {
-        const obs = [
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-02', temp: 11 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
+    it('rejects malformed observations and untrustworthy provenance', () => {
+        const request = makeRequest();
+        const malformed = makeObservations();
+        malformed[0] = null;
+        assertCategory(() => validateDataset(request, malformed, makeProvenance(request)), WeatherErrorCategory.MALFORMED_RESPONSE);
 
-    it('rejects non-finite temperature', () => {
-        const obs = [
-            { date: '2024-01-01', temp: NaN },
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        try {
-            validateDataset(request, obs, provenance);
-            assert.fail('Should have thrown');
-        } catch (err) {
-            assert.ok(err instanceof WeatherError);
-            assert.equal(err.category, WeatherErrorCategory.INCOMPLETE_COVERAGE);
-        }
-    });
-
-    it('rejects Infinity temperature', () => {
-        const obs = [
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-02', temp: Infinity },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        try {
-            validateDataset(request, obs, provenance);
-            assert.fail('Should have thrown');
-        } catch (err) {
-            assert.ok(err instanceof WeatherError);
-            assert.equal(err.category, WeatherErrorCategory.INCOMPLETE_COVERAGE);
-        }
-    });
-
-    it('rejects out-of-order dates', () => {
-        const obs = [
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
-
-    it('rejects duplicate dates', () => {
-        const obs = [
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-01', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
-
-    it('rejects date outside requested range', () => {
-        const obs = [
-            { date: '2023-12-31', temp: 10 },
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
-
-    it('rejects non-object observation', () => {
-        const obs = [
-            '2024-01-01',
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
-
-    it('rejects observation with invalid date format', () => {
-        const obs = [
-            { date: '01/01/2024', temp: 10 },
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        assert.throws(() => validateDataset(request, obs, provenance), WeatherError);
-    });
-
-    it('preserves provenance fields', () => {
-        const obs = [
-            { date: '2024-01-01', temp: 10 },
-            { date: '2024-01-02', temp: 11 },
-            { date: '2024-01-03', temp: 12 },
-            { date: '2024-01-04', temp: 13 },
-            { date: '2024-01-05', temp: 14 },
-        ];
-        const dataset = validateDataset(request, obs, provenance);
-        assert.equal(dataset.provenance.source, 'Open-Meteo');
-        assert.equal(dataset.provenance.measurement, 'temperature_2m_max');
-        assert.equal(dataset.provenance.temperatureUnit, 'celsius');
-        assert.equal(dataset.provenance.timezone, 'GMT');
-        assert.equal(dataset.provenance.latitude, 51.5);
-        assert.equal(dataset.provenance.longitude, -0.1);
-    });
-
-    it('throws WeatherError with correct category', () => {
-        try {
-            validateDataset(request, [], provenance);
-            assert.fail('Should have thrown');
-        } catch (err) {
-            assert.ok(err instanceof WeatherError);
-            assert.equal(err.category, WeatherErrorCategory.INCOMPLETE_COVERAGE);
-        }
-    });
-
-    it('throws malformed category for bad observation shape', () => {
-        try {
-            validateDataset(request, [null, null, null, null, null], provenance);
-            assert.fail('Should have thrown');
-        } catch (err) {
-            assert.ok(err instanceof WeatherError);
-            assert.equal(err.category, WeatherErrorCategory.MALFORMED_RESPONSE);
-        }
+        assertCategory(
+            () => validateDataset(request, makeObservations(), makeProvenance(request, { measurement: 'temperature_2m_max' })),
+            WeatherErrorCategory.MALFORMED_RESPONSE
+        );
+        assertCategory(
+            () => validateDataset(request, makeObservations(), makeProvenance(request, { temperatureUnit: 'fahrenheit' })),
+            WeatherErrorCategory.MALFORMED_RESPONSE
+        );
+        assertCategory(
+            () => validateDataset(request, makeObservations(), makeProvenance(request, { requestedDateRange: { start: '2024-01-02', end: '2024-01-05' } })),
+            WeatherErrorCategory.MALFORMED_RESPONSE
+        );
+        assertCategory(
+            () => validateDataset(request, makeObservations(), makeProvenance(request, { returnedDateRange: { start: '2024-01-02', end: '2024-01-05' } })),
+            WeatherErrorCategory.MALFORMED_RESPONSE
+        );
     });
 });

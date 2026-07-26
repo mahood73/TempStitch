@@ -7,47 +7,65 @@ export const WeatherErrorCategory = Object.freeze({
     INCOMPLETE_COVERAGE: 'incomplete-coverage',
 });
 
+const WEATHER_ERROR_MESSAGES = Object.freeze({
+    [WeatherErrorCategory.INVALID_REQUEST]: 'Please check your location and date settings',
+    [WeatherErrorCategory.PROVIDER_FAILURE]: 'Weather service is temporarily unavailable. Please try again',
+    [WeatherErrorCategory.MALFORMED_RESPONSE]: 'Received unexpected data from weather service',
+    [WeatherErrorCategory.INCOMPLETE_COVERAGE]: 'Weather data is not available for the full requested period',
+});
+
+const UNKNOWN_WEATHER_ERROR_MESSAGE = 'Unable to load weather data. Please try again';
+export const DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT = 'Daily maximum temperature at 2 m';
+
 export class WeatherError extends Error {
-    constructor(category, message) {
-        super(message);
+    constructor(category, cause) {
+        super(WEATHER_ERROR_MESSAGES[category] || UNKNOWN_WEATHER_ERROR_MESSAGE, cause === undefined ? undefined : { cause });
         this.name = 'WeatherError';
         this.category = category;
     }
 }
 
-function isValidDateString(s) {
-    if (typeof s !== 'string' || !DATE_RE.test(s)) return false;
-    const [y, m, d] = s.split('-').map(Number);
-    const date = new Date(Date.UTC(y, m - 1, d));
-    return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+function freeze(value) {
+    return Object.freeze(value);
+}
+
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isValidDateString(value) {
+    if (typeof value !== 'string' || !DATE_RE.test(value)) return false;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function hasFiniteCoordinate(latitude, longitude) {
+    return Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+        && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+}
+
+function sameDateRange(left, right) {
+    return left.start === right.start && left.end === right.end;
 }
 
 export function createDateRange(start, end) {
-    if (!isValidDateString(start)) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid start date: ${start}`);
+    if (!isValidDateString(start) || !isValidDateString(end) || start > end) {
+        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST);
     }
-    if (!isValidDateString(end)) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid end date: ${end}`);
-    }
-    if (start > end) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Start date ${start} is after end date ${end}`);
-    }
-    return { start, end };
+    return freeze({ start, end });
 }
 
 export function dateRangeFromYear(year) {
-    if (!Number.isInteger(year) || year < 1) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid year: ${year}`);
+    if (!Number.isInteger(year) || year < 1000 || year > 9999) {
+        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST);
     }
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    const endDay = isLeap ? 366 : 365;
-    const end = new Date(Date.UTC(year, 0, endDay));
-    return createDateRange(`${year}-01-01`, `${end.getUTCFullYear()}-${String(end.getUTCMonth() + 1).padStart(2, '0')}-${String(end.getUTCDate()).padStart(2, '0')}`);
+    return createDateRange(`${year}-01-01`, `${year}-12-31`);
 }
 
 export function dateRangeLastDays(days) {
     if (!Number.isInteger(days) || days < 1) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid day count: ${days}`);
+        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST);
     }
     const end = new Date(Date.now());
     const start = new Date(end);
@@ -59,101 +77,119 @@ export function dateRangeLastDays(days) {
 }
 
 export function countDaysInRange(dateRange) {
-    const [sy, sm, sd] = dateRange.start.split('-').map(Number);
-    const [ey, em, ed] = dateRange.end.split('-').map(Number);
-    const startMs = Date.UTC(sy, sm - 1, sd);
-    const endMs = Date.UTC(ey, em - 1, ed);
+    const range = createDateRange(dateRange?.start, dateRange?.end);
+    const [startYear, startMonth, startDay] = range.start.split('-').map(Number);
+    const [endYear, endMonth, endDay] = range.end.split('-').map(Number);
+    const startMs = Date.UTC(startYear, startMonth - 1, startDay);
+    const endMs = Date.UTC(endYear, endMonth - 1, endDay);
     return Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
 }
 
 export function expandDateRange(dateRange) {
-    const days = countDaysInRange(dateRange);
-    const [sy, sm, sd] = dateRange.start.split('-').map(Number);
+    const range = createDateRange(dateRange?.start, dateRange?.end);
+    const days = countDaysInRange(range);
+    const [year, month, day] = range.start.split('-').map(Number);
     const dates = [];
-    for (let i = 0; i < days; i++) {
-        const d = new Date(Date.UTC(sy, sm - 1, sd + i));
-        const y = d.getUTCFullYear();
-        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(d.getUTCDate()).padStart(2, '0');
-        dates.push(`${y}-${m}-${day}`);
+    for (let index = 0; index < days; index++) {
+        const date = new Date(Date.UTC(year, month - 1, day + index));
+        dates.push(`${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`);
     }
     return dates;
 }
 
 export function createWeatherRequest(displayName, lat, lon, dateRange, tempUnit) {
-    if (typeof displayName !== 'string' || displayName.trim() === '') {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, 'Location display name is required');
+    if (typeof displayName !== 'string' || displayName.trim() === ''
+        || !hasFiniteCoordinate(lat, lon)
+        || (tempUnit !== 'celsius' && tempUnit !== 'fahrenheit')) {
+        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST);
     }
-    if (typeof lat !== 'number' || lat < -90 || lat > 90 || !Number.isFinite(lat)) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid latitude: ${lat}`);
-    }
-    if (typeof lon !== 'number' || lon < -180 || lon > 180 || !Number.isFinite(lon)) {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid longitude: ${lon}`);
-    }
-    if (tempUnit !== 'celsius' && tempUnit !== 'fahrenheit') {
-        throw new WeatherError(WeatherErrorCategory.INVALID_REQUEST, `Invalid temperature unit: ${tempUnit}`);
-    }
-    return {
-        location: { displayName: displayName.trim(), lat, lon },
-        dateRange,
+
+    const normalizedDateRange = createDateRange(dateRange?.start, dateRange?.end);
+    return freeze({
+        location: freeze({ displayName: displayName.trim(), lat, lon }),
+        dateRange: normalizedDateRange,
         tempUnit,
-    };
+    });
+}
+
+export function normalizeWeatherRequest(request) {
+    return createWeatherRequest(
+        request?.location?.displayName,
+        request?.location?.lat,
+        request?.location?.lon,
+        request?.dateRange,
+        request?.tempUnit
+    );
+}
+
+function normalizeProvenance(request, provenance, observations) {
+    if (!isPlainObject(provenance)
+        || typeof provenance.source !== 'string' || provenance.source.trim() === ''
+        || provenance.measurement !== DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT
+        || provenance.temperatureUnit !== request.tempUnit
+        || typeof provenance.timezone !== 'string' || provenance.timezone.trim() === ''
+        || !hasFiniteCoordinate(provenance.latitude, provenance.longitude)) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+
+    let requestedDateRange;
+    let returnedDateRange;
+    try {
+        requestedDateRange = createDateRange(provenance.requestedDateRange?.start, provenance.requestedDateRange?.end);
+        returnedDateRange = createDateRange(provenance.returnedDateRange?.start, provenance.returnedDateRange?.end);
+    } catch (error) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, error);
+    }
+
+    if (!sameDateRange(requestedDateRange, request.dateRange)
+        || returnedDateRange.start !== observations[0].date
+        || returnedDateRange.end !== observations[observations.length - 1].date) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+
+    return freeze({
+        source: provenance.source.trim(),
+        measurement: DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+        temperatureUnit: request.tempUnit,
+        timezone: provenance.timezone.trim(),
+        latitude: provenance.latitude,
+        longitude: provenance.longitude,
+        requestedDateRange,
+        returnedDateRange,
+    });
 }
 
 export function validateDataset(request, rawObservations, provenance) {
+    const normalizedRequest = normalizeWeatherRequest(request);
     if (!Array.isArray(rawObservations) || rawObservations.length === 0) {
-        throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE, 'No observations returned');
+        throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE);
     }
 
-    const expectedDates = expandDateRange(request.dateRange);
-    const expectedCount = expectedDates.length;
-
-    if (rawObservations.length !== expectedCount) {
-        throw new WeatherError(
-            WeatherErrorCategory.INCOMPLETE_COVERAGE,
-            `Expected ${expectedCount} observations for ${request.dateRange.start} to ${request.dateRange.end}, received ${rawObservations.length}`
-        );
+    const expectedDates = expandDateRange(normalizedRequest.dateRange);
+    if (rawObservations.length !== expectedDates.length) {
+        throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE);
     }
 
-    const seen = new Set();
-    for (let i = 0; i < rawObservations.length; i++) {
-        const obs = rawObservations[i];
-        if (!obs || typeof obs !== 'object') {
-            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, `Observation at index ${i} is not an object`);
+    const observations = rawObservations.map((observation, index) => {
+        if (!isPlainObject(observation) || !isValidDateString(observation.date)) {
+            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
         }
-        if (typeof obs.date !== 'string' || !isValidDateString(obs.date)) {
-            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, `Observation at index ${i} has invalid date: ${obs.date}`);
+        if (typeof observation.temp !== 'number' || !Number.isFinite(observation.temp)) {
+            throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE);
         }
-        if (typeof obs.temp !== 'number' || !Number.isFinite(obs.temp)) {
-            throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE, `Observation at index ${i} has non-finite temperature`);
+        if (observation.date < normalizedRequest.dateRange.start || observation.date > normalizedRequest.dateRange.end) {
+            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
         }
-        if (obs.date < request.dateRange.start || obs.date > request.dateRange.end) {
-            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, `Observation at index ${i} has date ${obs.date} outside requested range`);
+        if (observation.date !== expectedDates[index]) {
+            throw new WeatherError(WeatherErrorCategory.INCOMPLETE_COVERAGE);
         }
-        if (obs.date !== expectedDates[i]) {
-            throw new WeatherError(
-                WeatherErrorCategory.INCOMPLETE_COVERAGE,
-                `Observation at index ${i} expected date ${expectedDates[i]}, got ${obs.date}`
-            );
-        }
-        if (seen.has(obs.date)) {
-            throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, `Duplicate observation for date ${obs.date}`);
-        }
-        seen.add(obs.date);
-    }
+        return freeze({ date: observation.date, temp: observation.temp });
+    });
 
-    return {
-        request,
-        observations: rawObservations,
-        provenance: {
-            source: provenance.source,
-            measurement: provenance.measurement,
-            temperatureUnit: provenance.temperatureUnit,
-            timezone: provenance.timezone,
-            latitude: provenance.latitude,
-            longitude: provenance.longitude,
-            requestedDateRange: provenance.requestedDateRange,
-            returnedDateRange: provenance.returnedDateRange,
-        },
-    };
+    const normalizedProvenance = normalizeProvenance(normalizedRequest, provenance, observations);
+    return freeze({
+        request: normalizedRequest,
+        observations: freeze(observations),
+        provenance: normalizedProvenance,
+    });
 }

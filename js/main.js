@@ -1,6 +1,6 @@
 import { getSaved, save, validate, requestBrowserLocation, search } from './location.js';
 import { fetchWeather } from './weather.js';
-import { dateRangeFromYear, dateRangeLastDays, createWeatherRequest, WeatherError, WeatherErrorCategory } from './weather-dataset.js';
+import { dateRangeFromYear, createWeatherRequest, WeatherError } from './weather-dataset.js';
 import { generate, renderGrid, renderStats, renderColourKey, renderInstructions } from './pattern.js';
 import { downloadImage, downloadInstructions } from './export.js';
 
@@ -75,19 +75,9 @@ function getLocation() {
 }
 
 function weatherErrorMessage(err) {
-    if (!(err instanceof WeatherError)) return 'Failed to fetch weather data: ' + err.message;
-    switch (err.category) {
-        case WeatherErrorCategory.INVALID_REQUEST:
-            return 'Please check your location and date settings';
-        case WeatherErrorCategory.PROVIDER_FAILURE:
-            return 'Weather service is temporarily unavailable. Please try again';
-        case WeatherErrorCategory.MALFORMED_RESPONSE:
-            return 'Received unexpected data from weather service';
-        case WeatherErrorCategory.INCOMPLETE_COVERAGE:
-            return 'Weather data is not available for the full requested period';
-        default:
-            return 'Failed to fetch weather data';
-    }
+    return err instanceof WeatherError
+        ? err.message
+        : 'Unable to load weather data. Please try again';
 }
 
 function hideSearchResults() {
@@ -157,8 +147,8 @@ async function generatePattern() {
 
     try {
         const unit = els.tempUnit.value;
-        const year = els.yearSelect.value ? parseInt(els.yearSelect.value) : null;
-        const dateRange = year ? dateRangeFromYear(year) : dateRangeLastDays(365);
+        const year = parseInt(els.yearSelect.value);
+        const dateRange = dateRangeFromYear(year);
         const request = createWeatherRequest(loc.displayName, loc.lat, loc.lon, dateRange, unit);
         const dataset = await fetchWeather(request);
 

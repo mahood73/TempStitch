@@ -1,8 +1,51 @@
-import { WeatherError, WeatherErrorCategory, validateDataset, expandDateRange } from './weather-dataset.js';
+import {
+    DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+    WeatherError,
+    WeatherErrorCategory,
+    normalizeWeatherRequest,
+    validateDataset,
+} from './weather-dataset.js';
 
 const API_BASE = 'https://archive-api.open-meteo.com/v1/archive';
 
-export function fetchUrl(request) {
+function isFiniteCoordinate(latitude, longitude) {
+    return Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+        && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+}
+
+function parseOpenMeteoPayload(data, request) {
+    const times = data?.daily?.time;
+    const temperatures = data?.daily?.temperature_2m_max;
+    const providerUnit = data?.daily_units?.temperature_2m_max;
+    const expectedProviderUnit = request.tempUnit === 'celsius' ? '°C' : '°F';
+    if (!Array.isArray(times) || !Array.isArray(temperatures) || times.length !== temperatures.length) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+    if (providerUnit !== expectedProviderUnit
+        || typeof data.timezone !== 'string' || data.timezone.trim() === ''
+        || !isFiniteCoordinate(data.latitude, data.longitude)) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+
+    const rawObservations = times.map((date, index) => ({ date, temp: temperatures[index] }));
+    const provenance = {
+        source: 'Open-Meteo',
+        measurement: DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+        temperatureUnit: request.tempUnit,
+        timezone: data.timezone,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        requestedDateRange: request.dateRange,
+        returnedDateRange: {
+            start: times[0],
+            end: times[times.length - 1],
+        },
+    };
+
+    return { rawObservations, provenance };
+}
+
+function buildFetchUrl(request) {
     const params = new URLSearchParams({
         latitude: request.location.lat,
         longitude: request.location.lon,
@@ -15,58 +58,38 @@ export function fetchUrl(request) {
     return `${API_BASE}?${params}`;
 }
 
-export async function fetchWeather(request, fetchFn = fetch) {
-    const url = fetchUrl(request);
+export function fetchUrl(request) {
+    return buildFetchUrl(normalizeWeatherRequest(request));
+}
 
-    let res;
+export async function fetchWeather(request, fetchFn = fetch) {
+    const normalizedRequest = normalizeWeatherRequest(request);
+    const url = buildFetchUrl(normalizedRequest);
+
+    let response;
     try {
-        res = await fetchFn(url);
-    } catch {
-        throw new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, 'Weather service is unavailable');
+        response = await fetchFn(url);
+    } catch (error) {
+        throw new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, error);
     }
 
-    if (!res.ok) {
-        let reason;
-        try {
-            const body = await res.json();
-            reason = body?.reason;
-        } catch {
-            // response body not JSON
-        }
-        throw new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, reason || `Weather API error (${res.status})`);
+    if (!response || typeof response.ok !== 'boolean') {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+    if (!response.ok) {
+        throw new WeatherError(
+            WeatherErrorCategory.PROVIDER_FAILURE,
+            new Error(`Weather provider returned HTTP ${response.status}`)
+        );
     }
 
     let data;
     try {
-        data = await res.json();
-    } catch {
-        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, 'Response is not valid JSON');
+        data = await response.json();
+    } catch (error) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, error);
     }
 
-    if (!data?.daily?.time || !data?.daily?.temperature_2m_max) {
-        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, 'Response missing expected fields');
-    }
-
-    const times = data.daily.time;
-    const temps = data.daily.temperature_2m_max;
-    const rawObservations = [];
-    for (let i = 0; i < times.length; i++) {
-        rawObservations.push({ date: times[i], temp: temps[i] });
-    }
-
-    const provenance = {
-        source: 'Open-Meteo',
-        measurement: 'temperature_2m_max',
-        temperatureUnit: request.tempUnit,
-        timezone: data.timezone || 'UTC',
-        latitude: data.latitude ?? request.location.lat,
-        longitude: data.longitude ?? request.location.lon,
-        requestedDateRange: request.dateRange,
-        returnedDateRange: {
-            start: times[0] ?? request.dateRange.start,
-            end: times[times.length - 1] ?? request.dateRange.end,
-        },
-    };
-
-    return validateDataset(request, rawObservations, provenance);
+    const { rawObservations, provenance } = parseOpenMeteoPayload(data, normalizedRequest);
+    return validateDataset(normalizedRequest, rawObservations, provenance);
 }
