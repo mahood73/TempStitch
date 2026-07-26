@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>TempStitch</h1>
-            <p class="subtitle">Turn a year of weather into a knitting or crochet pattern</p>
+            <p class="subtitle">Design beautiful temperature blankets from historical weather</p>
             <p><a href="about.html">About / Roadmap</a></p>
         </header>
 
@@ -32,7 +32,7 @@
                         <input type="number" id="longitude" step="0.0001" placeholder="e.g. -0.1278" min="-180" max="180">
                     </div>
                 </div>
-                <button id="geo-location-btn" class="btn btn-ghost" type="button">Use My Location</button>
+                <button id="geo-location-btn" class="btn btn-secondary" type="button">📍 Use my current location</button>
                 <div id="location-status" class="status" aria-live="polite"></div>
             </section>
 
@@ -94,13 +94,13 @@
                     </div>
                 </details>
 
-                <button id="fetch-weather-btn" class="btn btn-primary btn-large" type="button">Generate Design</button>
+                <button id="fetch-weather-btn" class="btn btn-primary btn-large" type="button">Create Blanket</button>
             </section>
 
             <section class="card" id="pattern-section" style="display: none;">
                 <div class="pattern-header">
-                    <h2>Your Design</h2>
-                    <button id="download-image-btn" class="btn btn-secondary" type="button">Download Image</button>
+                    <h2>Your Blanket</h2>
+                    <button id="download-image-btn" class="btn btn-secondary" type="button">Export</button>
                 </div>
                 <div id="colour-key" class="colour-key"></div>
                 <div id="pattern-stats" class="stats-panel"></div>

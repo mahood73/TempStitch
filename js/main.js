@@ -154,15 +154,18 @@
             const unitSymbol = unit === 'fahrenheit' ? '°F' : '°C';
             Pattern.renderStats(currentPattern.stats, els.patternStats, unitSymbol);
             Pattern.renderGrid(currentPattern, els.patternPreview);
-            Pattern.renderColourKey(currentPattern.colourKey, els.colourKey);
+            Pattern.renderColourKey(currentPattern.colourKey, els.colourKey, currentPattern.rows);
             Pattern.renderInstructions(currentPattern, els.patternInstructions);
 
             els.patternSection.style.display = 'block';
+            els.patternSection.classList.remove('pattern-animate');
+            void els.patternSection.offsetWidth;
+            els.patternSection.classList.add('pattern-animate');
             els.patternSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             if (!hasGenerated) {
                 hasGenerated = true;
-                els.fetchBtn.textContent = 'Update Design';
+                els.fetchBtn.textContent = 'Update Blanket';
             }
 
             setStatus(`Design generated: ${result.meta.latitude.toFixed(2)}, ${result.meta.longitude.toFixed(2)}`, 'success');

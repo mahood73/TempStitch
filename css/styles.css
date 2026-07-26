@@ -329,6 +329,11 @@ header h1 {
 
 /* Pattern section */
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .pattern-header {
     display: flex;
     justify-content: space-between;
@@ -504,6 +509,12 @@ header h1 {
     font-size: 0.65rem;
 }
 
+.colour-key-rows {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    margin-left: auto;
+}
+
 /* Instructions */
 
 .instructions-section h3 {
@@ -645,4 +656,8 @@ footer a:hover {
     .btn-large {
         margin-top: 0.75rem;
     }
+}
+
+.pattern-animate {
+    animation: fadeIn 0.4s ease-out;
 }

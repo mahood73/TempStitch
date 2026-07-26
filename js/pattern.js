@@ -85,7 +85,14 @@ const Pattern = (() => {
         `;
     }
 
-    function renderColourKey(colourKey, container) {
+    function renderColourKey(colourKey, container, rows) {
+        const rowCounts = {};
+        if (rows) {
+            rows.forEach(row => {
+                rowCounts[row.colourIndex] = (rowCounts[row.colourIndex] || 0) + 1;
+            });
+        }
+
         container.innerHTML = `
             <div class="colour-key-bar">
                 ${colourKey.map(entry => `
@@ -97,14 +104,17 @@ const Pattern = (() => {
                 <span>${colourKey[colourKey.length - 1].max}°</span>
             </div>
             <div class="colour-key-list">
-                ${colourKey.map(entry => `
+                ${colourKey.map(entry => {
+                    const count = rowCounts[entry.index] || 0;
+                    return `
                     <div class="colour-key-item">
                         <span class="colour-key-swatch" style="background: ${entry.colour};"></span>
                         <span class="colour-key-id">C${entry.index}</span>
                         <span class="colour-key-name">${entry.name}</span>
                         <span class="colour-key-range">${entry.label}</span>
-                    </div>
-                `).join('')}
+                        <span class="colour-key-rows">${count} rows</span>
+                    </div>`;
+                }).join('')}
             </div>
         `;
     }
