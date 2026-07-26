@@ -1,10 +1,9 @@
 import { calculateSmartDefaults, buildColourKey, getColor } from './color-mapper.js';
 
-export function generate(weatherData, options = {}) {
+export function generate(dataset, options = {}) {
     const {
         craftType = 'knit',
         terminology = 'uk',
-        tempUnit = 'celsius',
         stitchCount = 50,
         paletteName = 'default',
         numColours = 10,
@@ -12,7 +11,8 @@ export function generate(weatherData, options = {}) {
         colourKeyMax = null,
     } = options;
 
-    const temps = weatherData.days.map(d => d.temp);
+    const tempUnit = dataset.request.tempUnit;
+    const temps = dataset.observations.map(d => d.temp);
     const dataMin = Math.min(...temps);
     const dataMax = Math.max(...temps);
 
@@ -22,7 +22,7 @@ export function generate(weatherData, options = {}) {
 
     const colourKey = buildColourKey(min, max, numColours, paletteName);
 
-    const rows = weatherData.days.map(day => {
+    const rows = dataset.observations.map(day => {
         const colourEntry = getColor(day.temp, colourKey);
         return {
             date: day.date,
@@ -73,7 +73,7 @@ export function generate(weatherData, options = {}) {
         stats,
         colourKey,
         instructions,
-        options: { craftType, terminology, tempUnit, stitchCount, paletteName, numColours, min, max },
+        options: { craftType, terminology, tempUnit, stitchCount, paletteName, numColours, min, max, dateRange: dataset.request.dateRange },
     };
 }
 

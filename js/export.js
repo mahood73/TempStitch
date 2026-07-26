@@ -1,5 +1,3 @@
-import { getDateRange } from './weather.js';
-
 export function downloadImage(pattern) {
     const stitchWidth = 8;
     const rowHeight = 4;
@@ -26,7 +24,7 @@ export function downloadImage(pattern) {
 
     ctx.font = '10px sans-serif';
     ctx.fillStyle = '#78716c';
-    const range = getDateRange();
+    const range = pattern.options.dateRange;
     ctx.fillText(`${range.start} to ${range.end}  |  ${pattern.options.stitchCount} stitches/row`, width / 2, 42);
 
     let y = headerHeight;

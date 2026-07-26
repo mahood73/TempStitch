@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import * as Location from './location.js';
 import * as Weather from './weather.js';
+import * as WeatherDataset from './weather-dataset.js';
 import * as ColorMapper from './color-mapper.js';
 import * as Pattern from './pattern.js';
 import * as Export from './export.js';
@@ -17,8 +18,19 @@ describe('Module imports', () => {
     });
 
     it('weather.js exports expected functions', () => {
-        assert.equal(typeof Weather.fetchDailyMax, 'function');
-        assert.equal(typeof Weather.getDateRange, 'function');
+        assert.equal(typeof Weather.fetchWeather, 'function');
+        assert.equal(typeof Weather.fetchUrl, 'function');
+    });
+
+    it('weather-dataset.js exports expected types and functions', () => {
+        assert.equal(typeof WeatherDataset.WeatherError, 'function');
+        assert.ok(WeatherDataset.WeatherErrorCategory);
+        assert.equal(typeof WeatherDataset.createDateRange, 'function');
+        assert.equal(typeof WeatherDataset.dateRangeFromYear, 'function');
+        assert.equal(typeof WeatherDataset.countDaysInRange, 'function');
+        assert.equal(typeof WeatherDataset.expandDateRange, 'function');
+        assert.equal(typeof WeatherDataset.createWeatherRequest, 'function');
+        assert.equal(typeof WeatherDataset.validateDataset, 'function');
     });
 
     it('color-mapper.js exports expected functions and palettes', () => {

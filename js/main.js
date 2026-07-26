@@ -1,5 +1,6 @@
 import { getSaved, save, validate, requestBrowserLocation, search } from './location.js';
-import { fetchDailyMax } from './weather.js';
+import { fetchWeather } from './weather.js';
+import { dateRangeFromYear, dateRangeLastDays, createWeatherRequest, WeatherError, WeatherErrorCategory } from './weather-dataset.js';
 import { generate, renderGrid, renderStats, renderColourKey, renderInstructions } from './pattern.js';
 import { downloadImage, downloadInstructions } from './export.js';
 
@@ -69,7 +70,24 @@ function getLocation() {
         return null;
     }
     save(loc.lat, loc.lon);
-    return loc;
+    const displayName = els.searchInput.value.trim() || `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`;
+    return { ...loc, displayName };
+}
+
+function weatherErrorMessage(err) {
+    if (!(err instanceof WeatherError)) return 'Failed to fetch weather data: ' + err.message;
+    switch (err.category) {
+        case WeatherErrorCategory.INVALID_REQUEST:
+            return 'Please check your location and date settings';
+        case WeatherErrorCategory.PROVIDER_FAILURE:
+            return 'Weather service is temporarily unavailable. Please try again';
+        case WeatherErrorCategory.MALFORMED_RESPONSE:
+            return 'Received unexpected data from weather service';
+        case WeatherErrorCategory.INCOMPLETE_COVERAGE:
+            return 'Weather data is not available for the full requested period';
+        default:
+            return 'Failed to fetch weather data';
+    }
 }
 
 function hideSearchResults() {
@@ -140,18 +158,13 @@ async function generatePattern() {
     try {
         const unit = els.tempUnit.value;
         const year = els.yearSelect.value ? parseInt(els.yearSelect.value) : null;
-        const result = await fetchDailyMax(loc.lat, loc.lon, unit, year);
-
-        if (result.days.length === 0) {
-            showError('No weather data available for this location and date range');
-            hideLoading();
-            return;
-        }
+        const dateRange = year ? dateRangeFromYear(year) : dateRangeLastDays(365);
+        const request = createWeatherRequest(loc.displayName, loc.lat, loc.lon, dateRange, unit);
+        const dataset = await fetchWeather(request);
 
         const options = {
             craftType: els.craftType.value,
             terminology: els.terminology.value,
-            tempUnit: els.tempUnit.value,
             stitchCount: parseInt(els.stitchCount.value) || 50,
             paletteName: els.palette.value,
             numColours: parseInt(els.numColours.value) || 10,
@@ -159,12 +172,11 @@ async function generatePattern() {
             colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
         };
 
-        currentPattern = generate(result, options);
+        currentPattern = generate(dataset, options);
 
         hideLoading();
 
-        const unitSymbol = unit === 'fahrenheit' ? '°F' : '°C';
-        renderStats(currentPattern.stats, els.patternStats, unitSymbol);
+        renderStats(currentPattern.stats, els.patternStats, currentPattern.options.tempUnit === 'fahrenheit' ? '°F' : '°C');
         renderGrid(currentPattern, els.patternPreview);
         renderColourKey(currentPattern.colourKey, els.colourKey, currentPattern.rows);
         renderInstructions(currentPattern, els.patternInstructions);
@@ -182,10 +194,10 @@ async function generatePattern() {
             els.settingsSection.querySelector('h2').textContent = 'Edit your blanket';
         }
 
-        setStatus(`Design generated: ${result.meta.latitude.toFixed(2)}, ${result.meta.longitude.toFixed(2)}`, 'success');
+        setStatus(`Design generated: ${dataset.provenance.latitude.toFixed(2)}, ${dataset.provenance.longitude.toFixed(2)}`, 'success');
     } catch (err) {
         hideLoading();
-        showError('Failed to fetch weather data: ' + err.message);
+        showError(weatherErrorMessage(err));
     } finally {
         els.fetchBtn.disabled = false;
     }

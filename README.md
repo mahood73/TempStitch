@@ -44,6 +44,7 @@ about.html              — about and roadmap
 css/styles.css          — styling
 js/location.js          — lat/long input, geolocation, and search
 js/weather.js           — Open-Meteo API integration
+js/weather-dataset.js   — weather domain types, validation, and error categories
 js/color-mapper.js      — temperature-to-colour mapping
 js/pattern.js           — design and pattern generation
 js/export.js            — image download
