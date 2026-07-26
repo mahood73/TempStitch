@@ -19,20 +19,36 @@ Open `index.html` in a browser, search for a location (or use device location), 
 
 ## Development
 
-No build step required. Edit the HTML, CSS, and JS files directly and refresh the browser.
+No build step required. All JavaScript files are ES modules loaded directly by the browser.
+
+**Important:** The application must be served over HTTP (not opened as a `file://` URL) because ES modules require a network origin. Use VS Code's **Live Server** extension, `python3 -m http.server`, or any static file server.
+
+### Running locally
+
+1. Start a static file server in the project root (e.g. VS Code Live Server, `npx serve .`, or `python3 -m http.server`).
+2. Open the served URL in your browser.
+
+### Running tests
+
+```sh
+npm test
+```
+
+Tests use Node's built-in test runner (`node --test`) with no third-party dependencies. They import the same ES module interfaces used by the browser.
 
 ### Files
 
 ```
-index.html          — main page
-about.html          — about and roadmap
-css/styles.css      — styling
-js/location.js      — lat/long input, geolocation, and search
-js/weather.js       — Open-Meteo API integration
-js/color-mapper.js  — temperature-to-colour mapping
-js/pattern.js       — design and pattern generation
-js/export.js        — image download
-js/main.js          — app wiring and event handlers
+index.html              — main page (module entry point)
+about.html              — about and roadmap
+css/styles.css          — styling
+js/location.js          — lat/long input, geolocation, and search
+js/weather.js           — Open-Meteo API integration
+js/color-mapper.js      — temperature-to-colour mapping
+js/pattern.js           — design and pattern generation
+js/export.js            — image download
+js/main.js              — app wiring and event handlers (entry point)
+js/*.test.js            — tests
 ```
 
 ## Roadmap
