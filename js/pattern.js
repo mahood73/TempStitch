@@ -22,7 +22,7 @@ export function generate(dataset, options = {}) {
 
     const colourKey = buildColourKey(min, max, numColours, paletteName);
 
-    const rows = dataset.observations.map(day => {
+    const bands = dataset.observations.map(day => {
         const colourEntry = getColor(day.temp, colourKey);
         return {
             date: day.date,
@@ -30,9 +30,10 @@ export function generate(dataset, options = {}) {
             colour: colourEntry.colour,
             colourIndex: colourEntry.index,
             colourName: colourEntry.name,
-            stitches: stitchCount,
         };
     });
+
+    const rows = bands.map(band => ({ ...band, stitches: stitchCount }));
 
     const stats = {
         minTemp: Math.min(...temps),
@@ -43,7 +44,7 @@ export function generate(dataset, options = {}) {
         heightInches: Math.round((rows.length / 6) * 10) / 10,
     };
 
-    const unitSymbol = options.tempUnit === 'fahrenheit' ? '°F' : '°C';
+    const unitSymbol = tempUnit === 'fahrenheit' ? '°F' : '°C';
     const instructions = [];
     if (craftType === 'knit') {
         const castOn = 'Cast on';
@@ -69,21 +70,20 @@ export function generate(dataset, options = {}) {
     }
 
     return {
-        rows,
-        stats,
-        colourKey,
-        instructions,
-        options: { craftType, terminology, tempUnit, stitchCount, paletteName, numColours, min, max, dateRange: dataset.request.dateRange },
+        dataset,
+        settings: { craftType, terminology, stitchCount, paletteName, numColours, colourKeyMin, colourKeyMax },
+        design: { bands, colourKey, stats, min, max, tempUnit },
+        pattern: { rows, instructions },
     };
 }
 
-export function renderGrid(pattern, container) {
+export function renderGrid(bands, container) {
     container.innerHTML = '';
-    pattern.rows.forEach(row => {
+    bands.forEach(band => {
         const rowEl = document.createElement('div');
         rowEl.className = 'pattern-row';
-        rowEl.style.background = row.colour;
-        rowEl.setAttribute('data-tooltip', `${row.date}: ${row.temp}°`);
+        rowEl.style.background = band.colour;
+        rowEl.setAttribute('data-tooltip', `${band.date}: ${band.temp}°`);
         container.appendChild(rowEl);
     });
 }
@@ -121,11 +121,11 @@ export function renderStats(stats, container, unit = '°') {
     `;
 }
 
-export function renderColourKey(colourKey, container, rows) {
+export function renderColourKey(colourKey, container, bands) {
     const rowCounts = {};
-    if (rows) {
-        rows.forEach(row => {
-            rowCounts[row.colourIndex] = (rowCounts[row.colourIndex] || 0) + 1;
+    if (bands) {
+        bands.forEach(band => {
+            rowCounts[band.colourIndex] = (rowCounts[band.colourIndex] || 0) + 1;
         });
     }
 

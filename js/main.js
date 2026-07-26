@@ -36,7 +36,7 @@ const els = {
     downloadInstructionsBtn: $('download-instructions-btn'),
 };
 
-let currentPattern = null;
+let currentProject = null;
 let hasGenerated = false;
 let searchTimeout = null;
 
@@ -172,14 +172,14 @@ async function generatePattern() {
             colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
         };
 
-        currentPattern = generate(dataset, options);
+        currentProject = generate(dataset, options);
 
         hideLoading();
 
-        renderStats(currentPattern.stats, els.patternStats, currentPattern.options.tempUnit === 'fahrenheit' ? '°F' : '°C');
-        renderGrid(currentPattern, els.patternPreview);
-        renderColourKey(currentPattern.colourKey, els.colourKey, currentPattern.rows);
-        renderInstructions(currentPattern, els.patternInstructions);
+        renderStats(currentProject.design.stats, els.patternStats, currentProject.design.tempUnit === 'fahrenheit' ? '°F' : '°C');
+        renderGrid(currentProject.design.bands, els.patternPreview);
+        renderColourKey(currentProject.design.colourKey, els.colourKey, currentProject.design.bands);
+        renderInstructions(currentProject.pattern, els.patternInstructions);
 
         els.patternSection.style.display = 'block';
         document.querySelector('main').classList.add('has-pattern');
@@ -197,7 +197,11 @@ async function generatePattern() {
         setStatus(`Design generated: ${dataset.provenance.latitude.toFixed(2)}, ${dataset.provenance.longitude.toFixed(2)}`, 'success');
     } catch (err) {
         hideLoading();
-        showError(weatherErrorMessage(err));
+        if (currentProject) {
+            showError(weatherErrorMessage(err) + ' The previous design is unchanged.');
+        } else {
+            showError(weatherErrorMessage(err));
+        }
     } finally {
         els.fetchBtn.disabled = false;
     }
@@ -248,11 +252,11 @@ function init() {
     els.geoBtn.addEventListener('click', handleGeoLocation);
     els.fetchBtn.addEventListener('click', generatePattern);
     els.downloadBtn.addEventListener('click', () => {
-        if (currentPattern) downloadImage(currentPattern);
+        if (currentProject) downloadImage(currentProject);
     });
 
     els.downloadInstructionsBtn.addEventListener('click', () => {
-        if (currentPattern) downloadInstructions(currentPattern);
+        if (currentProject) downloadInstructions(currentProject);
     });
 
     els.stitchPreset.addEventListener('change', () => {

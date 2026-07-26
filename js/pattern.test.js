@@ -26,64 +26,109 @@ function mockDataset(temps) {
     };
 }
 
-describe('Pattern.generate', () => {
-    it('produces rows matching input observations', () => {
-        const dataset = mockDataset([5, 10, 15, 20, 25]);
-        const pattern = generate(dataset);
-        assert.equal(pattern.rows.length, 5);
+describe('Project generation', () => {
+    it('produces a project with dataset, settings, design, and pattern', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset);
+        assert.ok(project.dataset);
+        assert.ok(project.settings);
+        assert.ok(project.design);
+        assert.ok(project.pattern);
     });
 
-    it('each row has date, temp, colour, colourIndex, colourName, stitches', () => {
+    it('dataset is the original weather dataset', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, { stitchCount: 40 });
-        for (const row of pattern.rows) {
-            assert.ok(row.date);
-            assert.ok(typeof row.temp === 'number');
-            assert.ok(typeof row.colour === 'string');
-            assert.ok(typeof row.colourIndex === 'number');
-            assert.ok(typeof row.colourName === 'string');
-            assert.equal(row.stitches, 40);
+        const project = generate(dataset);
+        assert.strictEqual(project.dataset, dataset);
+    });
+
+    it('settings snapshot contains form values', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset, { craftType: 'crochet', stitchCount: 80, paletteName: 'warm', numColours: 6 });
+        assert.equal(project.settings.craftType, 'crochet');
+        assert.equal(project.settings.stitchCount, 80);
+        assert.equal(project.settings.paletteName, 'warm');
+        assert.equal(project.settings.numColours, 6);
+    });
+
+    it('design owns bands, colourKey, stats, and bounds', () => {
+        const dataset = mockDataset([5, 10, 15, 20, 25]);
+        const project = generate(dataset, { numColours: 5 });
+        assert.equal(project.design.bands.length, 5);
+        assert.equal(project.design.colourKey.length, 5);
+        assert.equal(project.design.stats.minTemp, 5);
+        assert.equal(project.design.stats.maxTemp, 25);
+        assert.equal(project.design.stats.totalDays, 5);
+        assert.equal(typeof project.design.min, 'number');
+        assert.equal(typeof project.design.max, 'number');
+        assert.equal(project.design.tempUnit, 'celsius');
+    });
+
+    it('bands have no stitches property', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset, { stitchCount: 40 });
+        for (const band of project.design.bands) {
+            assert.ok(band.date);
+            assert.ok(typeof band.temp === 'number');
+            assert.ok(typeof band.colour === 'string');
+            assert.ok(typeof band.colourIndex === 'number');
+            assert.ok(typeof band.colourName === 'string');
+            assert.equal(band.stitches, undefined);
         }
     });
 
-    it('stats include min, max, avg, totalDays', () => {
-        const dataset = mockDataset([5, 10, 15, 20, 25]);
-        const pattern = generate(dataset);
-        assert.equal(pattern.stats.minTemp, 5);
-        assert.equal(pattern.stats.maxTemp, 25);
-        assert.equal(pattern.stats.totalDays, 5);
-        assert.equal(pattern.stats.avgTemp, 15);
+    it('pattern owns rows and instructions', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset, { stitchCount: 40 });
+        assert.equal(project.pattern.rows.length, 3);
+        assert.ok(Array.isArray(project.pattern.instructions));
+        for (const row of project.pattern.rows) {
+            assert.equal(row.stitches, 40);
+            assert.ok(row.date);
+            assert.ok(typeof row.temp === 'number');
+        }
     });
 
-    it('colourKey has correct number of entries', () => {
-        const dataset = mockDataset([5, 10, 15, 20, 25]);
-        const pattern = generate(dataset, { numColours: 5 });
-        assert.equal(pattern.colourKey.length, 5);
+    it('rows are derived from bands with stitch count added', () => {
+        const dataset = mockDataset([5, 10, 15]);
+        const project = generate(dataset, { stitchCount: 60 });
+        for (let i = 0; i < project.design.bands.length; i++) {
+            const band = project.design.bands[i];
+            const row = project.pattern.rows[i];
+            assert.equal(row.date, band.date);
+            assert.equal(row.temp, band.temp);
+            assert.equal(row.colour, band.colour);
+            assert.equal(row.colourIndex, band.colourIndex);
+            assert.equal(row.colourName, band.colourName);
+            assert.equal(row.stitches, 60);
+        }
     });
+});
 
+describe('Pattern generation', () => {
     it('instructions start with cast-on for knit', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, { craftType: 'knit' });
-        assert.match(pattern.instructions[0], /^Cast on \d+ stitches/);
+        const project = generate(dataset, { craftType: 'knit' });
+        assert.match(project.pattern.instructions[0], /^Cast on \d+ stitches/);
     });
 
     it('instructions start with chain for crochet', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, { craftType: 'crochet' });
-        assert.match(pattern.instructions[0], /^Chain \d+/);
+        const project = generate(dataset, { craftType: 'crochet' });
+        assert.match(project.pattern.instructions[0], /^Chain \d+/);
     });
 
     it('uses UK terminology by default', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, { craftType: 'knit' });
-        const last = pattern.instructions[pattern.instructions.length - 1];
+        const project = generate(dataset, { craftType: 'knit' });
+        const last = project.pattern.instructions[project.pattern.instructions.length - 1];
         assert.equal(last, 'Cast off.');
     });
 
     it('uses US terminology when specified', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, { craftType: 'knit', terminology: 'us' });
-        const last = pattern.instructions[pattern.instructions.length - 1];
+        const project = generate(dataset, { craftType: 'knit', terminology: 'us' });
+        const last = project.pattern.instructions[project.pattern.instructions.length - 1];
         assert.equal(last, 'Bind off.');
     });
 
@@ -99,34 +144,20 @@ describe('Pattern.generate', () => {
             ],
             provenance: { source: 'Open-Meteo', measurement: 'temperature_2m_max', temperatureUnit: 'fahrenheit', timezone: 'GMT', latitude: 51.5, longitude: -0.1, requestedDateRange: dateRange, returnedDateRange: dateRange },
         };
-        const pattern = generate(dataset);
-        assert.equal(pattern.options.tempUnit, 'fahrenheit');
-    });
-
-    it('options are preserved in output', () => {
-        const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset, {
-            craftType: 'crochet',
-            stitchCount: 80,
-            paletteName: 'warm',
-            numColours: 6,
-        });
-        assert.equal(pattern.options.craftType, 'crochet');
-        assert.equal(pattern.options.stitchCount, 80);
-        assert.equal(pattern.options.paletteName, 'warm');
-        assert.equal(pattern.options.numColours, 6);
+        const project = generate(dataset);
+        assert.equal(project.design.tempUnit, 'fahrenheit');
     });
 
     it('respects colourKeyMin/Max overrides', () => {
         const dataset = mockDataset([10, 20, 30]);
-        const pattern = generate(dataset, { colourKeyMin: 0, colourKeyMax: 50, numColours: 5 });
-        assert.equal(pattern.colourKey[0].min, 0);
-        assert.equal(pattern.colourKey[pattern.colourKey.length - 1].max, 50);
+        const project = generate(dataset, { colourKeyMin: 0, colourKeyMax: 50, numColours: 5 });
+        assert.equal(project.design.colourKey[0].min, 0);
+        assert.equal(project.design.colourKey[project.design.colourKey.length - 1].max, 50);
     });
 
-    it('includes dateRange in options from dataset', () => {
+    it('dateRange comes from dataset request', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const pattern = generate(dataset);
-        assert.deepEqual(pattern.options.dateRange, { start: '2024-01-01', end: '2024-01-03' });
+        const project = generate(dataset);
+        assert.deepEqual(project.dataset.request.dateRange, { start: '2024-01-01', end: '2024-01-03' });
     });
 });

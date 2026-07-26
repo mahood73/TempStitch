@@ -52,6 +52,8 @@ describe('Module imports', () => {
     });
 
     it('export.js exports expected functions', () => {
+        assert.equal(typeof Export.composeImageFilename, 'function');
+        assert.equal(typeof Export.composeInstructionsText, 'function');
         assert.equal(typeof Export.downloadImage, 'function');
         assert.equal(typeof Export.downloadInstructions, 'function');
     });

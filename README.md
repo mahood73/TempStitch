@@ -47,7 +47,7 @@ js/weather.js           — Open-Meteo API integration
 js/weather-dataset.js   — weather domain types, validation, and error categories
 js/color-mapper.js      — temperature-to-colour mapping
 js/pattern.js           — design and pattern generation
-js/export.js            — image download
+js/export.js            — export composition and file downloads
 js/main.js              — app wiring and event handlers (entry point)
 js/*.test.js            — tests
 ```
