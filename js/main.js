@@ -12,6 +12,7 @@
         craftType: $('craft-type'),
         tempUnit: $('temp-unit'),
         stitchCount: $('stitch-count'),
+        stitchPreset: $('stitch-preset'),
         yearSelect: $('year-select'),
         numColours: $('num-colours'),
         colourKeyMin: $('colour-key-min'),
@@ -230,6 +231,13 @@
         els.fetchBtn.addEventListener('click', generatePattern);
         els.downloadBtn.addEventListener('click', () => {
             if (currentPattern) Export.downloadImage(currentPattern);
+        });
+
+        els.stitchPreset.addEventListener('change', () => {
+            const val = els.stitchPreset.value;
+            if (val) {
+                els.stitchCount.value = val;
+            }
         });
     }
 
