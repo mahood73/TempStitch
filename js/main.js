@@ -146,6 +146,7 @@
             const options = {
                 craftType: els.craftType.value,
                 terminology: els.terminology.value,
+                tempUnit: els.tempUnit.value,
                 stitchCount: parseInt(els.stitchCount.value) || 50,
                 paletteName: els.palette.value,
                 numColours: parseInt(els.numColours.value) || 10,

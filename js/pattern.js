@@ -3,6 +3,7 @@ const Pattern = (() => {
         const {
             craftType = 'knit',
             terminology = 'uk',
+            tempUnit = 'celsius',
             stitchCount = 50,
             paletteName = 'default',
             numColours = 10,
@@ -39,6 +40,7 @@ const Pattern = (() => {
             totalDays: rows.length,
         };
 
+        const unitSymbol = options.tempUnit === 'fahrenheit' ? '°F' : '°C';
         const instructions = [];
         if (craftType === 'knit') {
             const castOn = 'Cast on';
@@ -48,7 +50,7 @@ const Pattern = (() => {
                 const dateObj = new Date(row.date + 'T00:00:00');
                 const month = dateObj.toLocaleString('en-GB', { month: 'short' });
                 const day = dateObj.getDate();
-                instructions.push(`Row ${i + 1} (${month} ${day}): Knit across in C${row.colourIndex} ${row.colourName} (${row.temp}°)`);
+                instructions.push(`Row ${i + 1} (${month} ${day}): Knit across in C${row.colourIndex} ${row.colourName} (${row.temp}${unitSymbol})`);
             });
             instructions.push(`${bindOff}.`);
         } else {
@@ -58,7 +60,7 @@ const Pattern = (() => {
                 const dateObj = new Date(row.date + 'T00:00:00');
                 const month = dateObj.toLocaleString('en-GB', { month: 'short' });
                 const day = dateObj.getDate();
-                instructions.push(`Row ${i + 1} (${month} ${day}): ${dc} in each stitch across in C${row.colourIndex} ${row.colourName} (${row.temp}°)`);
+                instructions.push(`Row ${i + 1} (${month} ${day}): ${dc} in each stitch across in C${row.colourIndex} ${row.colourName} (${row.temp}${unitSymbol})`);
             });
             instructions.push('Fasten off.');
         }
@@ -68,7 +70,7 @@ const Pattern = (() => {
             stats,
             colourKey,
             instructions,
-            options: { craftType, terminology, stitchCount, paletteName, numColours, min, max },
+            options: { craftType, terminology, tempUnit, stitchCount, paletteName, numColours, min, max },
         };
     }
 
