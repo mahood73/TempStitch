@@ -1,5 +1,10 @@
 import { calculateSmartDefaults, buildColourKey, getColor } from './color-mapper.js';
 
+const GAUGE = {
+    knit:   { stitchesPerInch: 4.5, rowsPerInch: 6 },
+    crochet: { stitchesPerInch: 3.5, rowsPerInch: 4 },
+};
+
 function deepFreeze(value, seen = new Set()) {
     if (value === null || typeof value !== 'object' || seen.has(value)) return value;
     seen.add(value);
@@ -42,13 +47,16 @@ export function generate(dataset, options = {}) {
 
     const rows = bands.map(band => ({ ...band, stitches: stitchCount }));
 
+    const gauge = GAUGE[craftType] || GAUGE.knit;
+
     const stats = {
         minTemp: Math.min(...temps),
         maxTemp: Math.max(...temps),
         avgTemp: Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10,
         totalDays: rows.length,
-        widthInches: Math.round((stitchCount / 4.5) * 10) / 10,
-        heightInches: Math.round((rows.length / 6) * 10) / 10,
+        widthInches: Math.round((stitchCount / gauge.stitchesPerInch) * 10) / 10,
+        heightInches: Math.round((rows.length / gauge.rowsPerInch) * 10) / 10,
+        gauge,
     };
 
     const unitSymbol = tempUnit === 'fahrenheit' ? '°F' : '°C';
@@ -112,6 +120,7 @@ export function renderGrid(bands, container) {
 }
 
 export function renderStats(stats, container, unit = '°') {
+    const gauge = stats.gauge;
     container.innerHTML = `
         <div class="stats-row">
             <div class="stat-card">
@@ -134,12 +143,16 @@ export function renderStats(stats, container, unit = '°') {
         <div class="stats-row stats-size">
             <div class="stat-card">
                 <div class="stat-value">${stats.widthInches}"</div>
-                <div class="stat-label">Width</div>
+                <div class="stat-label">Est. Width</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${stats.heightInches}"</div>
-                <div class="stat-label">Height</div>
+                <div class="stat-label">Est. Height</div>
             </div>
+        </div>
+        <div class="stats-gauge-note">
+            Based on ${gauge.stitchesPerInch} stitches/inch and ${gauge.rowsPerInch} rows/inch.
+            Actual size varies with yarn and tension.
         </div>
     `;
 }

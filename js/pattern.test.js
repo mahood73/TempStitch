@@ -79,6 +79,28 @@ describe('Project generation', () => {
         assert.equal(project.design.tempUnit, 'celsius');
     });
 
+    it('stats include craft-specific gauge assumptions', () => {
+        const dataset = mockDataset([5, 10, 15, 20, 25]);
+        const knitProject = generate(dataset, { craftType: 'knit', stitchCount: 50 });
+        assert.equal(knitProject.design.stats.gauge.stitchesPerInch, 4.5);
+        assert.equal(knitProject.design.stats.gauge.rowsPerInch, 6);
+
+        const crochetProject = generate(dataset, { craftType: 'crochet', stitchCount: 50 });
+        assert.equal(crochetProject.design.stats.gauge.stitchesPerInch, 3.5);
+        assert.equal(crochetProject.design.stats.gauge.rowsPerInch, 4);
+    });
+
+    it('size estimates use craft-specific gauge', () => {
+        const dataset = mockDataset([5, 10, 15, 20, 25]);
+        const knitProject = generate(dataset, { craftType: 'knit', stitchCount: 45 });
+        assert.equal(knitProject.design.stats.widthInches, 10);
+        assert.equal(knitProject.design.stats.heightInches, 0.8);
+
+        const crochetProject = generate(dataset, { craftType: 'crochet', stitchCount: 35 });
+        assert.equal(crochetProject.design.stats.widthInches, 10);
+        assert.equal(crochetProject.design.stats.heightInches, 1.3);
+    });
+
     it('bands have no stitches property', () => {
         const dataset = mockDataset([5, 10, 15]);
         const project = generate(dataset, { stitchCount: 40 });

@@ -419,6 +419,13 @@ main.has-pattern #error {
     max-width: 50%;
 }
 
+.stats-gauge-note {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+    line-height: 1.4;
+}
+
 .stat-card {
     background: var(--bg);
     padding: 0.625rem 0.5rem;
