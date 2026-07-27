@@ -152,6 +152,9 @@ export function renderColourKey(colourKey, container, bands) {
         });
     }
 
+    const maxCount = Math.max(...colourKey.map(e => rowCounts[e.index] || 0), 1);
+    const barWidth = 10;
+
     container.innerHTML = `
         <div class="colour-key-bar">
             ${colourKey.map(entry => `
@@ -165,13 +168,15 @@ export function renderColourKey(colourKey, container, bands) {
         <div class="colour-key-list">
             ${colourKey.map(entry => {
                 const count = rowCounts[entry.index] || 0;
+                const filled = Math.round((count / maxCount) * barWidth);
+                const bar = '█'.repeat(filled) + '░'.repeat(barWidth - filled);
                 return `
                 <div class="colour-key-item">
                     <span class="colour-key-swatch" style="background: ${entry.colour};"></span>
                     <span class="colour-key-id">C${entry.index}</span>
                     <span class="colour-key-name">${entry.name}</span>
                     <span class="colour-key-range">${entry.label}</span>
-                    <span class="colour-key-rows">${count} rows</span>
+                    <span class="colour-key-rows">${count} rows ${bar}</span>
                 </div>`;
             }).join('')}
         </div>
