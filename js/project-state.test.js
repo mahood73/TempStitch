@@ -6,7 +6,8 @@ import { createProjectStore } from './project-state.js';
 describe('Project store', () => {
     it('installs a Project only after it is presented successfully', () => {
         const firstProject = Object.freeze({ id: 'first' });
-        const nextProject = Object.freeze({ id: 'next' });
+        const replacementProject = Object.freeze({ id: 'replacement' });
+        const failedProject = Object.freeze({ id: 'failed' });
         const presented = [];
         let presentationFails = false;
         const store = createProjectStore((project) => {
@@ -19,8 +20,13 @@ describe('Project store', () => {
         assert.strictEqual(store.getProject(), firstProject);
         assert.deepEqual(presented, [firstProject]);
 
+        assert.strictEqual(store.commit(replacementProject), replacementProject);
+        assert.strictEqual(store.getProject(), replacementProject);
+        assert.deepEqual(presented, [firstProject, replacementProject]);
+
         presentationFails = true;
-        assert.throws(() => store.commit(nextProject), /Presentation failed/);
-        assert.strictEqual(store.getProject(), firstProject);
+        assert.throws(() => store.commit(failedProject), /Presentation failed/);
+        assert.strictEqual(store.getProject(), replacementProject);
+        assert.deepEqual(presented, [firstProject, replacementProject]);
     });
 });

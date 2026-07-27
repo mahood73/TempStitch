@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 
 import { generate } from './pattern.js';
 import { createDateRange, createWeatherRequest } from './weather-dataset.js';
@@ -173,5 +174,48 @@ describe('Pattern generation', () => {
         const dataset = mockDataset([5, 10, 15]);
         const project = generate(dataset);
         assert.deepEqual(project.dataset.request.dateRange, { start: '2024-01-01', end: '2024-01-03' });
+    });
+
+    it('preserves calendar dates and instruction labels across timezones', () => {
+        const patternModule = new URL('./pattern.js', import.meta.url).href;
+        const script = `
+            import { generate } from ${JSON.stringify(patternModule)};
+            const dataset = {
+                request: { tempUnit: 'celsius' },
+                observations: [
+                    { date: '2024-01-01', temp: 5 },
+                    { date: '2024-06-15', temp: 10 },
+                    { date: '2024-12-31', temp: 15 },
+                ],
+            };
+            const project = generate(dataset);
+            console.log(JSON.stringify({
+                dates: project.pattern.rows.map((row) => row.date),
+                labels: project.pattern.instructions.slice(1, -1).map((line) => line.match(/\\(([^)]+)\\):/)[1]),
+            }));
+        `;
+        const outputs = ['UTC', 'Pacific/Kiritimati', 'America/Adak'].map((timezone) => {
+            const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], {
+                encoding: 'utf8',
+                env: { ...process.env, TZ: timezone },
+            });
+            assert.equal(result.status, 0, `${timezone} child failed: ${result.stderr}`);
+            return JSON.parse(result.stdout);
+        });
+
+        assert.deepEqual(outputs, [
+            {
+                dates: ['2024-01-01', '2024-06-15', '2024-12-31'],
+                labels: ['Jan 1', 'Jun 15', 'Dec 31'],
+            },
+            {
+                dates: ['2024-01-01', '2024-06-15', '2024-12-31'],
+                labels: ['Jan 1', 'Jun 15', 'Dec 31'],
+            },
+            {
+                dates: ['2024-01-01', '2024-06-15', '2024-12-31'],
+                labels: ['Jan 1', 'Jun 15', 'Dec 31'],
+            },
+        ]);
     });
 });

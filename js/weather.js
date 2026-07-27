@@ -70,17 +70,17 @@ export async function fetchWeather(request, fetchFn = fetch) {
     try {
         response = await fetchFn(url);
     } catch (error) {
-        throw new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, error);
+        throw new WeatherError(WeatherErrorCategory.PROVIDER_UNAVAILABLE, error);
     }
 
     if (!response || typeof response.ok !== 'boolean') {
         throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
     }
     if (!response.ok) {
-        throw new WeatherError(
-            WeatherErrorCategory.PROVIDER_FAILURE,
-            new Error(`Weather provider returned HTTP ${response.status}`)
-        );
+        const category = response.status === 400 || response.status === 422
+            ? WeatherErrorCategory.PROVIDER_REJECTION
+            : WeatherErrorCategory.PROVIDER_UNAVAILABLE;
+        throw new WeatherError(category, new Error(`Weather provider returned HTTP ${response.status}`));
     }
 
     let data;

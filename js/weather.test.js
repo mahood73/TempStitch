@@ -72,6 +72,7 @@ describe('fetchWeather', () => {
 
             assert.equal(dataset.observations.length, year === 2024 ? 366 : 365);
             assert.deepEqual(dataset.request.dateRange, request.dateRange);
+            assert.equal(dataset.provenance.source, 'Open-Meteo');
             assert.equal(dataset.provenance.measurement, DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT);
             assert.equal(dataset.provenance.latitude, 51.5074);
             assert.equal(dataset.provenance.longitude, -0.1278);
@@ -100,18 +101,35 @@ describe('fetchWeather', () => {
         assert.equal(dataset.provenance.temperatureUnit, 'fahrenheit');
     });
 
-    it('returns safe provider failures without exposing provider details', async () => {
+    it('distinguishes safe provider rejection from provider unavailability', async () => {
         const request = buildRequest();
         await assert.rejects(
-            () => fetchWeather(request, makeFakeFetch({ reason: 'Internal service secret' }, 429)),
-            (error) => error.category === WeatherErrorCategory.PROVIDER_FAILURE
-                && error.message === 'Weather service is temporarily unavailable. Please try again'
-                && error.cause.message === 'Weather provider returned HTTP 429'
+            () => fetchWeather(request, makeFakeFetch({ reason: 'Invalid parameters' }, 400)),
+            (error) => error.category === WeatherErrorCategory.PROVIDER_REJECTION
+                && error.message === 'Weather service rejected this request. Please check the selected settings.'
+                && error.cause.message === 'Weather provider returned HTTP 400'
         );
 
         await assert.rejects(
+            () => fetchWeather(request, makeFakeFetch({ reason: 'Invalid date range' }, 422)),
+            (error) => error.category === WeatherErrorCategory.PROVIDER_REJECTION
+                && error.message === 'Weather service rejected this request. Please check the selected settings.'
+                && error.cause.message === 'Weather provider returned HTTP 422'
+        );
+
+        for (const status of [404, 408, 429, 503]) {
+            await assert.rejects(
+                () => fetchWeather(request, makeFakeFetch({ reason: 'Internal service secret' }, status)),
+                (error) => error.category === WeatherErrorCategory.PROVIDER_UNAVAILABLE
+                    && error.message === 'Weather service is temporarily unavailable. Please try again'
+                    && error.cause.message === `Weather provider returned HTTP ${status}`
+            );
+        }
+
+        await assert.rejects(
             () => fetchWeather(request, async () => { throw new TypeError('Network request failed'); }),
-            (error) => error.message === 'Weather service is temporarily unavailable. Please try again'
+            (error) => error.category === WeatherErrorCategory.PROVIDER_UNAVAILABLE
+                && error.message === 'Weather service is temporarily unavailable. Please try again'
                 && error.cause instanceof TypeError
         );
     });

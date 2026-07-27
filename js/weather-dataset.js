@@ -2,14 +2,16 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export const WeatherErrorCategory = Object.freeze({
     INVALID_REQUEST: 'invalid-request',
-    PROVIDER_FAILURE: 'provider-failure',
+    PROVIDER_REJECTION: 'provider-rejection',
+    PROVIDER_UNAVAILABLE: 'provider-unavailable',
     MALFORMED_RESPONSE: 'malformed-response',
     INCOMPLETE_COVERAGE: 'incomplete-coverage',
 });
 
 const WEATHER_ERROR_MESSAGES = Object.freeze({
     [WeatherErrorCategory.INVALID_REQUEST]: 'Please check your location and date settings',
-    [WeatherErrorCategory.PROVIDER_FAILURE]: 'Weather service is temporarily unavailable. Please try again',
+    [WeatherErrorCategory.PROVIDER_REJECTION]: 'Weather service rejected this request. Please check the selected settings.',
+    [WeatherErrorCategory.PROVIDER_UNAVAILABLE]: 'Weather service is temporarily unavailable. Please try again',
     [WeatherErrorCategory.MALFORMED_RESPONSE]: 'Received unexpected data from weather service',
     [WeatherErrorCategory.INCOMPLETE_COVERAGE]: 'Weather data is not available for the full requested period',
 });

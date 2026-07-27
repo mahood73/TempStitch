@@ -2,9 +2,15 @@ const STITCH_WIDTH = 8;
 const ROW_HEIGHT = 4;
 const PADDING = 40;
 const KEY_HEIGHT = 30;
+const MIN_EXPORT_WIDTH = 480;
 
 function temperatureUnitLabel(tempUnit) {
     return tempUnit === 'fahrenheit' ? 'Fahrenheit (°F)' : 'Celsius (°C)';
+}
+
+function heading(project, noun) {
+    const { start, end } = project.dataset.request.dateRange;
+    return `TempStitch ${noun} — ${start} to ${end}`;
 }
 
 function authorityMetadata(project) {
@@ -34,12 +40,12 @@ export function composeImagePlan(project) {
     const unitSymbol = project.design.tempUnit === 'fahrenheit' ? '°F' : '°C';
     const metadata = authorityMetadata(project);
     const headerHeight = 30 + metadata.length * 14;
-    const width = project.settings.stitchCount * STITCH_WIDTH + PADDING * 2;
+    const width = Math.max(project.settings.stitchCount * STITCH_WIDTH + PADDING * 2, MIN_EXPORT_WIDTH);
     const height = headerHeight + project.pattern.rows.length * ROW_HEIGHT + KEY_HEIGHT + PADDING * 2;
 
     return {
         filename: composeImageFilename(project),
-        title: 'TempStitch Design',
+        title: heading(project, 'Design'),
         metadata,
         rows: project.pattern.rows,
         colourKey: project.design.colourKey,
@@ -53,9 +59,10 @@ export function composeImagePlan(project) {
 }
 
 export function composeInstructionsText(project) {
+    const title = heading(project, 'Pattern');
     return [
-        'TempStitch Pattern',
-        '==================',
+        title,
+        '='.repeat(title.length),
         '',
         ...authorityMetadata(project),
         `Craft: ${project.settings.craftType === 'knit' ? 'Knitting' : 'Crochet'}`,

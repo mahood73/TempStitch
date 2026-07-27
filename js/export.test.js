@@ -85,18 +85,27 @@ describe('composeImagePlan', () => {
             'Temperature unit: Fahrenheit (°F)',
             'Stitches per row: 50',
         ]);
+        assert.equal(plan.title, 'TempStitch Design — 2024-01-01 to 2024-01-03');
         assert.equal(plan.minLabel, '5°F');
         assert.equal(plan.maxLabel, '15°F');
         assert.equal(plan.width, 480);
         assert.equal(plan.height, 236);
     });
+
+    it('keeps an authoritative title visible for a narrow design', () => {
+        const plan = composeImagePlan(mockProject({ stitchCount: 10 }));
+
+        assert.equal(plan.width, 480);
+        assert.equal(plan.title, 'TempStitch Design — 2024-01-01 to 2024-01-03');
+    });
 });
 
 describe('composeInstructionsText', () => {
-    it('starts with title and separator', () => {
+    it('starts with the requested date range in its heading and separator', () => {
         const project = mockProject();
-        const text = composeInstructionsText(project);
-        assert.ok(text.startsWith('TempStitch Pattern\n=================='));
+        const [title, separator] = composeInstructionsText(project).split('\n');
+        assert.equal(title, 'TempStitch Pattern — 2024-01-01 to 2024-01-03');
+        assert.equal(separator, '='.repeat(title.length));
     });
 
     it('contains authoritative location, coordinates, date range, and temperature unit', () => {

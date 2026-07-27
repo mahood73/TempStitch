@@ -61,13 +61,20 @@ function assertCategory(action, category) {
 }
 
 describe('WeatherError', () => {
-    it('owns a safe category message and retains an optional cause', () => {
+    it('owns safe provider category messages and retains an optional cause', () => {
         const cause = new Error('untrusted provider detail');
-        const error = new WeatherError(WeatherErrorCategory.PROVIDER_FAILURE, cause);
+        const cases = [
+            [WeatherErrorCategory.PROVIDER_REJECTION, 'Weather service rejected this request. Please check the selected settings.'],
+            [WeatherErrorCategory.PROVIDER_UNAVAILABLE, 'Weather service is temporarily unavailable. Please try again'],
+        ];
 
-        assert.equal(error.message, 'Weather service is temporarily unavailable. Please try again');
-        assert.equal(error.cause, cause);
-        assert.equal(error.name, 'WeatherError');
+        for (const [category, message] of cases) {
+            const error = new WeatherError(category, cause);
+            assert.equal(error.category, category);
+            assert.equal(error.message, message);
+            assert.equal(error.cause, cause);
+            assert.equal(error.name, 'WeatherError');
+        }
     });
 
     it('uses a safe fixed message for an unknown category', () => {
