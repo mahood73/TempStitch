@@ -39,6 +39,7 @@ const els = {
     error: $('error'),
     downloadBtn: $('download-image-btn'),
     downloadInstructionsBtn: $('download-instructions-btn'),
+    editSettingsBtn: $('edit-settings-btn'),
 };
 
 const projectStore = createProjectStore((project) => {
@@ -219,6 +220,12 @@ function init() {
     els.downloadInstructionsBtn.addEventListener('click', () => {
         const project = projectStore.getProject();
         if (project) downloadInstructions(project);
+    });
+
+    els.editSettingsBtn.addEventListener('click', () => {
+        els.settingsBody.setAttribute('open', '');
+        els.settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        els.craftType.focus();
     });
 
     els.stitchPreset.addEventListener('change', () => {

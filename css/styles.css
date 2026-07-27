@@ -399,6 +399,12 @@ main.has-pattern #error {
     margin-bottom: 1rem;
 }
 
+.pattern-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .pattern-header h2 {
     margin-bottom: 0;
 }
