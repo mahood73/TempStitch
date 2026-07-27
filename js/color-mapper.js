@@ -177,9 +177,12 @@ export function buildColourKey(min, max, numColours, paletteName) {
     for (let i = 0; i < numColours; i++) {
         const rangeMin = Math.round(temp);
         const rangeMax = Math.round(temp + increment);
+        const name = paletteName === 'monochrome'
+            ? `Shade ${i + 1}`
+            : colourNameFromHex(scale[i]);
         key.push({
             index: i + 1,
-            name: colourNameFromHex(scale[i]),
+            name,
             min: rangeMin,
             max: rangeMax,
             label: `${rangeMin}°–${rangeMax - 1}°`,
