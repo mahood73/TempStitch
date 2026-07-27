@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test js/**/*.test.js",
+    "test": "node --test $(find js -name '*.test.js' -maxdepth 1)",
     "test:e2e": "playwright test"
   },
   "license": "AGPL-3.0-only",
