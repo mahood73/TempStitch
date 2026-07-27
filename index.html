@@ -68,7 +68,7 @@
         <section class="card" id="settings-section">
           <h2 id="settings-heading">Settings</h2>
           <details id="settings-body" open>
-            <summary class="settings-toggle">Configure your blanket</summary>
+            <summary class="settings-toggle">Configure your scarf</summary>
             <div class="settings-grid">
               <div class="form-group">
                 <label for="craft-type">Craft</label>
@@ -108,8 +108,8 @@
                 <label for="stitch-preset">Preset</label>
                 <select id="stitch-preset">
                   <option value="">Custom</option>
-                  <option value="50" selected>Scarf (50)</option>
-                  <option value="200">Blanket (200)</option>
+                  <option value="50" data-project-type="scarf" selected>Scarf (50)</option>
+                  <option value="200" data-project-type="blanket">Blanket (200)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -169,13 +169,13 @@
             class="btn btn-primary btn-large"
             type="button"
           >
-            Create Blanket
+            Create Scarf
           </button>
         </section>
 
         <section class="card" id="pattern-section" style="display: none">
           <div class="pattern-header">
-            <h2>Your Blanket</h2>
+            <h2>Your Scarf</h2>
             <button
               id="download-image-btn"
               class="btn btn-secondary"

@@ -51,6 +51,30 @@ const projectStore = createProjectStore((project) => {
 let hasGenerated = false;
 let searchTimeout = null;
 
+function projectType() {
+    const selected = els.stitchPreset.selectedOptions[0];
+    return selected?.dataset?.projectType || 'blanket';
+}
+
+function updateLabels() {
+    const type = projectType();
+    const cap = type === 'scarf' ? 'Scarf' : 'Blanket';
+    const low = type;
+
+    els.fetchBtn.textContent = hasGenerated ? `Update ${cap}` : `Create ${cap}`;
+    els.settingsHeading.textContent = hasGenerated ? `Edit your ${low}` : 'Settings';
+
+    const toggle = els.settingsBody.querySelector('.settings-toggle');
+    if (toggle) {
+        toggle.textContent = hasGenerated ? 'Change settings' : `Configure your ${low}`;
+    }
+
+    const resultHeading = els.patternSection.querySelector('h2');
+    if (resultHeading) {
+        resultHeading.textContent = `Your ${cap}`;
+    }
+}
+
 function showError(msg) {
     els.error.textContent = msg;
     els.error.style.display = 'block';
@@ -187,10 +211,8 @@ async function generatePattern() {
 
         if (!hasGenerated) {
             hasGenerated = true;
-            els.fetchBtn.textContent = 'Update Blanket';
-            els.settingsHeading.textContent = 'Edit your blanket';
+            updateLabels();
             els.settingsBody.removeAttribute('open');
-            els.settingsBody.querySelector('.settings-toggle').textContent = 'Change settings';
         }
 
         const location = committedProject.dataset.request.location;
@@ -238,6 +260,8 @@ function init() {
     els.yearSelect.value = prevYear;
     els.yearSelect.max = prevYear;
 
+    updateLabels();
+
     els.searchInput.addEventListener('input', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(handleSearch, 300);
@@ -270,6 +294,7 @@ function init() {
         if (val) {
             els.stitchCount.value = val;
         }
+        updateLabels();
     });
 }
 
