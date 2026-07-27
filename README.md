@@ -54,13 +54,13 @@ js/*.test.js            — tests
 
 ## Roadmap
 
-| Version | Description |
-|---------|-------------|
-| **v1 (MVP)** | Core functionality, polish, and deployment |
-| **v1.1** | Stitch count presets, downloadable instructions, size estimation, colour key grid, favicon, C/F toggle, knit/crochet toggle, UK/US terminology, layout reorder, UI polish, row counts |
-| **v1.5** | Gauge input, PDF export, yarn quantity calculator, zoom, tension-based sizing, logo, stitched preview |
-| **v2** | Date range selection, border stitches, aggregation modes |
-| **Someday** | Map picker, multiple locations, community gallery |
+| Version      | Description                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1 (MVP)** | Core functionality, polish, and deployment                                                                                                                                            |
+| **v1.1**     | Stitch count presets, downloadable instructions, size estimation, colour key grid, favicon, C/F toggle, knit/crochet toggle, UK/US terminology, layout reorder, UI polish, row counts |
+| **v1.5**     | Gauge input, PDF export, yarn quantity calculator, zoom, tension-based sizing, logo, stitched preview                                                                                 |
+| **v2**       | Date range selection, border stitches, aggregation modes                                                                                                                              |
+| **Someday**  | Map picker, multiple locations, community gallery                                                                                                                                     |
 
 See [GitHub Issues](https://github.com/mahood73/TempStitch/issues) for details.
 
@@ -70,4 +70,14 @@ Weather data from [Open-Meteo](https://open-meteo.com) (free, no API key require
 
 ## License
 
-MIT
+TempStitch is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+The AGPL was chosen to ensure that improvements to hosted versions of TempStitch remain available to the community. You're welcome to use, modify and self-host the project, but if you make your modified version available over a network, the AGPL requires you to make the corresponding source code available as well.
+
+See the [LICENSE](LICENSE) file for the full licence text.
+
+## Contributing
+
+Issues, feature requests and pull requests are very welcome.
+
+If you build something interesting with TempStitch, I'd love to hear about it!
