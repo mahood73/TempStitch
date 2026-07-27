@@ -14,7 +14,7 @@ function deepFreeze(value, seen = new Set()) {
 
 export function generate(dataset, options = {}) {
     const {
-        craftType = 'knit',
+        craftType = 'crochet',
         terminology = 'us',
         stitchCount = 50,
         paletteName = 'default',

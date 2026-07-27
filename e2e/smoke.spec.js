@@ -12,7 +12,7 @@ test.describe('v1.1 smoke tests', () => {
     test('all form controls are present with correct defaults', async ({ page }) => {
         await page.goto('/');
 
-        await expect(page.locator('#craft-type')).toHaveValue('knit');
+        await expect(page.locator('#craft-type')).toHaveValue('crochet');
         await expect(page.locator('#temp-unit')).toHaveValue('celsius');
         await expect(page.locator('#terminology')).toHaveValue('uk');
         await expect(page.locator('#stitch-count')).toHaveValue('50');
