@@ -28,6 +28,11 @@
               id="location-search"
               placeholder="e.g. London, Paris, New York"
               autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="search-results"
+              aria-expanded="false"
+              aria-haspopup="listbox"
             />
             <div
               id="search-results"
@@ -209,7 +214,7 @@
           <p>Fetching weather data...</p>
         </div>
 
-        <div id="error" class="error" style="display: none"></div>
+        <div id="error" class="error" style="display: none" role="alert"></div>
       </main>
 
       <footer>

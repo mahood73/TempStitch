@@ -8,6 +8,8 @@ import * as ColorMapper from './color-mapper.js';
 import * as Pattern from './pattern.js';
 import * as Export from './export.js';
 import * as ProjectState from './project-state.js';
+import * as ProjectTypes from './project-types.js';
+import * as Search from './search.js';
 
 describe('Module imports', () => {
     it('location.js exports expected functions', () => {
@@ -64,5 +66,19 @@ describe('Module imports', () => {
 
     it('project-state.js exports the Project store seam', () => {
         assert.equal(typeof ProjectState.createProjectStore, 'function');
+    });
+
+    it('project-types.js exports constants and helpers', () => {
+        assert.ok(ProjectTypes.PROJECT_TYPES);
+        assert.equal(ProjectTypes.PROJECT_TYPES.scarf, 'scarf');
+        assert.equal(ProjectTypes.PROJECT_TYPES.blanket, 'blanket');
+        assert.ok(ProjectTypes.PROJECT_TYPE_LABELS);
+        assert.equal(typeof ProjectTypes.typeLabel, 'function');
+        assert.equal(ProjectTypes.typeLabel('scarf'), 'Scarf');
+        assert.equal(ProjectTypes.typeLabel('blanket'), 'Blanket');
+    });
+
+    it('search.js exports setupSearch', () => {
+        assert.equal(typeof Search.setupSearch, 'function');
     });
 });

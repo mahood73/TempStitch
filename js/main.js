@@ -1,9 +1,11 @@
-import { getSaved, save, validate, requestBrowserLocation, search } from './location.js';
+import { getSaved, save, validate, requestBrowserLocation } from './location.js';
 import { fetchWeather } from './weather.js';
 import { dateRangeFromYear, createWeatherRequest, WeatherError } from './weather-dataset.js';
 import { generate, renderProject } from './pattern.js';
 import { createProjectStore } from './project-state.js';
 import { downloadImage, downloadInstructions } from './export.js';
+import { PROJECT_TYPES, typeLabel } from './project-types.js';
+import { setupSearch } from './search.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -49,16 +51,15 @@ const projectStore = createProjectStore((project) => {
 });
 
 let hasGenerated = false;
-let searchTimeout = null;
 
 function projectType() {
     const selected = els.stitchPreset.selectedOptions[0];
-    return selected?.dataset?.projectType || 'blanket';
+    return selected?.dataset?.projectType || PROJECT_TYPES.blanket;
 }
 
 function updateLabels() {
     const type = projectType();
-    const cap = type === 'scarf' ? 'Scarf' : 'Blanket';
+    const cap = typeLabel(type);
     const low = type;
 
     els.fetchBtn.textContent = hasGenerated ? `Update ${cap}` : `Create ${cap}`;
@@ -101,7 +102,8 @@ function setStatus(msg, type) {
 function getLocation() {
     const loc = validate(els.lat.value, els.lon.value);
     if (!loc) {
-        showError('Please enter valid latitude (-90 to 90) and longitude (-180 to 180)');
+        showError('Select a location by searching for a place or using "Use my current location".');
+        els.searchInput.focus();
         return null;
     }
     save(loc.lat, loc.lon);
@@ -113,63 +115,6 @@ function weatherErrorMessage(err) {
     return err instanceof WeatherError
         ? err.message
         : 'Unable to load weather data. Please try again';
-}
-
-function hideSearchResults() {
-    els.searchResults.style.display = 'none';
-    els.searchResults.innerHTML = '';
-}
-
-function showSearchResults(results) {
-    if (results.length === 0) {
-        els.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-        els.searchResults.style.display = 'block';
-        return;
-    }
-
-    els.searchResults.innerHTML = results.map((r, i) => {
-        const parts = [r.name];
-        if (r.admin1) parts.push(r.admin1);
-        if (r.country) parts.push(r.country);
-        const meta = parts.join(', ');
-        const coords = `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`;
-        return `<div class="search-result-item" data-index="${i}">
-            <div class="search-result-name">${r.name}</div>
-            <div class="search-result-meta">${meta} &middot; ${coords}</div>
-        </div>`;
-    }).join('');
-
-    els.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-        item.addEventListener('click', () => {
-            const r = results[parseInt(item.dataset.index)];
-            els.lat.value = r.latitude.toFixed(4);
-            els.lon.value = r.longitude.toFixed(4);
-            const parts = [r.name];
-            if (r.admin1) parts.push(r.admin1);
-            if (r.country) parts.push(r.country);
-            els.searchInput.value = parts.join(', ');
-            hideSearchResults();
-            save(r.latitude, r.longitude);
-            setStatus(`Location set: ${r.name}`, 'success');
-        });
-    });
-
-    els.searchResults.style.display = 'block';
-}
-
-async function handleSearch() {
-    const query = els.searchInput.value.trim();
-    if (query.length < 2) {
-        hideSearchResults();
-        return;
-    }
-
-    try {
-        const results = await search(query);
-        showSearchResults(results);
-    } catch (err) {
-        hideSearchResults();
-    }
 }
 
 async function generatePattern() {
@@ -262,20 +207,7 @@ function init() {
 
     updateLabels();
 
-    els.searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(handleSearch, 300);
-    });
-
-    els.searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') hideSearchResults();
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!els.searchResults.contains(e.target) && e.target !== els.searchInput) {
-            hideSearchResults();
-        }
-    });
+    setupSearch(els, { save, setStatus });
 
     els.geoBtn.addEventListener('click', handleGeoLocation);
     els.fetchBtn.addEventListener('click', generatePattern);
