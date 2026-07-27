@@ -1,5 +1,11 @@
 import { search } from './location.js';
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 export function setupSearch(els, { save, setStatus }) {
     let activeIndex = -1;
     let currentResults = [];
@@ -39,13 +45,11 @@ export function setupSearch(els, { save, setStatus }) {
         }
 
         els.searchResults.innerHTML = results.map((r, i) => {
-            const parts = [r.name];
-            if (r.admin1) parts.push(r.admin1);
-            if (r.country) parts.push(r.country);
-            const meta = parts.join(', ');
+            const parts = [r.name, r.admin1, r.country].filter(Boolean);
+            const meta = escapeHtml(parts.join(', '));
             const coords = `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`;
             return `<div class="search-result-item" role="option" id="search-result-${i}" data-index="${i}">
-                <div class="search-result-name">${r.name}</div>
+                <div class="search-result-name">${escapeHtml(r.name)}</div>
                 <div class="search-result-meta">${meta} &middot; ${coords}</div>
             </div>`;
         }).join('');
@@ -66,13 +70,11 @@ export function setupSearch(els, { save, setStatus }) {
     function selectResult(r) {
         els.lat.value = r.latitude.toFixed(4);
         els.lon.value = r.longitude.toFixed(4);
-        const parts = [r.name];
-        if (r.admin1) parts.push(r.admin1);
-        if (r.country) parts.push(r.country);
+        const parts = [r.name, r.admin1, r.country].filter(Boolean);
         els.searchInput.value = parts.join(', ');
         hideSearchResults();
         save(r.latitude, r.longitude);
-        setStatus(`Location set: ${r.name}`, 'success');
+        setStatus('Location set: ' + r.name, 'success');
     }
 
     async function handleSearch() {

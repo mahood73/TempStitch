@@ -65,8 +65,14 @@ export function calculateSmartDefaults(dataMin, dataMax, numColours) {
     const range = dataMax - dataMin;
     if (range <= 0) return { min: dataMin - 5, max: dataMax + 5 };
 
-    const min = Math.floor(dataMin);
-    const max = Math.ceil(dataMax);
+    let min = Math.floor(dataMin);
+    let max = Math.ceil(dataMax);
+
+    if (max - min < numColours) {
+        const half = Math.ceil((numColours - (max - min)) / 2);
+        min -= half;
+        max += half;
+    }
 
     return { min, max };
 }
@@ -195,6 +201,8 @@ export function buildColourKey(min, max, numColours, paletteName) {
 }
 
 export function getColor(temp, colourKey) {
+    if (colourKey.length === 0) return null;
+    if (temp < colourKey[0].min) return colourKey[0];
     for (const entry of colourKey) {
         if (temp >= entry.min && temp < entry.max) return entry;
     }

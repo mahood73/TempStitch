@@ -199,8 +199,8 @@ export function renderInstructions(pattern, container) {
         colourMap[row.colourIndex] = row.colour;
     });
 
-    function renderLines(lines) {
-        container.innerHTML = lines.map(line => {
+    function renderLines(target, lines) {
+        target.innerHTML = lines.map(line => {
             const match = line.match(/C(\d+)/);
             const colourIndex = match ? parseInt(match[1]) : null;
             const colour = colourIndex ? colourMap[colourIndex] : '#ccc';
@@ -209,7 +209,7 @@ export function renderInstructions(pattern, container) {
         }).join('');
     }
 
-    renderLines(allLines.slice(0, initialCount));
+    renderLines(container, allLines.slice(0, initialCount));
 
     if (allLines.length > initialCount) {
         const showAllBtn = document.createElement('button');
@@ -217,7 +217,7 @@ export function renderInstructions(pattern, container) {
         showAllBtn.textContent = `Show all ${allLines.length} rows`;
         showAllBtn.style.marginTop = '0.5rem';
         showAllBtn.addEventListener('click', () => {
-            renderLines(allLines);
+            renderLines(showAllBtn.parentElement, allLines);
             showAllBtn.remove();
         });
         container.appendChild(showAllBtn);

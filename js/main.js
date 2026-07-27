@@ -55,7 +55,9 @@ let hasGenerated = false;
 
 function projectType() {
     const selected = els.stitchPreset.selectedOptions[0];
-    return selected?.dataset?.projectType || PROJECT_TYPES.blanket;
+    if (selected?.dataset?.projectType) return selected.dataset.projectType;
+    const sts = parseInt(els.stitchCount.value) || 50;
+    return sts <= 50 ? PROJECT_TYPES.scarf : PROJECT_TYPES.blanket;
 }
 
 function updateLabels() {
@@ -129,6 +131,11 @@ async function generatePattern() {
     try {
         const unit = els.tempUnit.value;
         const year = parseInt(els.yearSelect.value);
+        if (isNaN(year) || year < 1940 || year > new Date().getFullYear()) {
+            showError('Please select a valid year (1940–' + new Date().getFullYear() + ').');
+            els.fetchBtn.disabled = false;
+            return;
+        }
         const dateRange = dateRangeFromYear(year);
         const request = createWeatherRequest(loc.displayName, loc.lat, loc.lon, dateRange, unit);
         const dataset = await fetchWeather(request);

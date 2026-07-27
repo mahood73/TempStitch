@@ -132,9 +132,10 @@ export function downloadImage(project) {
 
 export function downloadInstructions(project) {
     const blob = new Blob([composeInstructionsText(project)], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.download = composeInstructionsFilename(project);
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.click();
-    URL.revokeObjectURL(link.href);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

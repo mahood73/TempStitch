@@ -10,7 +10,11 @@ export function getSaved() {
 }
 
 export function save(lat, lon) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lon }));
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lon }));
+    } catch {
+        /* localStorage unavailable or full */
+    }
 }
 
 export function validate(lat, lon) {

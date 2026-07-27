@@ -15,7 +15,7 @@ Enter your location, and TempStitch fetches the daily maximum temperature for a 
 
 ## Usage
 
-Open `index.html` in a browser, search for a location (or use device location), select a year, and click **Generate Design**.
+Serve the project folder over HTTP (e.g. `npx serve .`), then open the served URL in a browser. Search for a location (or use device location), select a year, and click **Generate Design**.
 
 ## Development
 

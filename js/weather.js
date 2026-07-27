@@ -62,13 +62,13 @@ export function fetchUrl(request) {
     return buildFetchUrl(normalizeWeatherRequest(request));
 }
 
-export async function fetchWeather(request, fetchFn = fetch) {
+export async function fetchWeather(request, fetchFn = fetch, signal) {
     const normalizedRequest = normalizeWeatherRequest(request);
     const url = buildFetchUrl(normalizedRequest);
 
     let response;
     try {
-        response = await fetchFn(url);
+        response = await fetchFn(url, { signal });
     } catch (error) {
         throw new WeatherError(WeatherErrorCategory.PROVIDER_UNAVAILABLE, error);
     }
