@@ -260,6 +260,37 @@ main.has-pattern #error {
     margin-top: 0.5rem;
 }
 
+/* Settings toggle (collapsible) */
+
+.settings-toggle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.375rem 0;
+    user-select: none;
+    list-style: none;
+}
+
+.settings-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.settings-toggle::before {
+    content: "\25B6";
+    display: inline-block;
+    font-size: 0.6rem;
+    margin-right: 0.4rem;
+    transition: transform 0.15s;
+}
+
+#settings-body[open] > .settings-toggle::before {
+    transform: rotate(90deg);
+}
+
+.settings-toggle:hover {
+    color: var(--text);
+}
+
 /* Advanced toggle */
 
 .advanced-toggle {

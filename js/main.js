@@ -26,6 +26,8 @@ const els = {
     palette: $('colour-palette'),
     terminology: $('terminology'),
     settingsSection: $('settings-section'),
+    settingsHeading: $('settings-heading'),
+    settingsBody: $('settings-body'),
     patternSection: $('pattern-section'),
     patternPreview: $('pattern-preview'),
     patternStats: $('pattern-stats'),
@@ -186,7 +188,9 @@ async function generatePattern() {
         if (!hasGenerated) {
             hasGenerated = true;
             els.fetchBtn.textContent = 'Update Blanket';
-            els.settingsSection.querySelector('h2').textContent = 'Edit your blanket';
+            els.settingsHeading.textContent = 'Edit your blanket';
+            els.settingsBody.removeAttribute('open');
+            els.settingsBody.querySelector('.settings-toggle').textContent = 'Change settings';
         }
 
         const location = committedProject.dataset.request.location;
