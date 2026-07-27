@@ -15,7 +15,7 @@ function deepFreeze(value, seen = new Set()) {
 export function generate(dataset, options = {}) {
     const {
         craftType = 'knit',
-        terminology = 'uk',
+        terminology = 'us',
         stitchCount = 50,
         paletteName = 'default',
         numColours = 10,
@@ -79,7 +79,7 @@ export function generate(dataset, options = {}) {
             const dateObj = new Date(row.date + 'T00:00:00');
             const month = dateObj.toLocaleString('en-GB', { month: 'short' });
             const day = dateObj.getDate();
-            instructions.push(`Row ${i + 1} (${month} ${day}): ${dc} in each stitch across in C${row.colourIndex} ${row.colourName} (${row.temp}${unitSymbol})`);
+            instructions.push(`Row ${i + 1} (${month} ${day}): ${dc} across in C${row.colourIndex} ${row.colourName} (${row.temp}${unitSymbol})`);
         });
         instructions.push('Fasten off.');
     }

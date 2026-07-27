@@ -155,18 +155,18 @@ describe('Pattern generation', () => {
         assert.match(project.pattern.instructions[0], /^Chain \d+/);
     });
 
-    it('uses UK terminology by default', () => {
+    it('uses US terminology by default', () => {
         const dataset = mockDataset([5, 10, 15]);
         const project = generate(dataset, { craftType: 'knit' });
         const last = project.pattern.instructions[project.pattern.instructions.length - 1];
-        assert.equal(last, 'Cast off.');
+        assert.equal(last, 'Bind off.');
     });
 
-    it('uses US terminology when specified', () => {
+    it('uses UK terminology when specified', () => {
         const dataset = mockDataset([5, 10, 15]);
-        const project = generate(dataset, { craftType: 'knit', terminology: 'us' });
+        const project = generate(dataset, { craftType: 'knit', terminology: 'uk' });
         const last = project.pattern.instructions[project.pattern.instructions.length - 1];
-        assert.equal(last, 'Bind off.');
+        assert.equal(last, 'Cast off.');
     });
 
     it('reads tempUnit from dataset request', () => {
