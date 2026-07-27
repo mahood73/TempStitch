@@ -204,7 +204,8 @@ export function renderInstructions(pattern, container) {
             const match = line.match(/C(\d+)/);
             const colourIndex = match ? parseInt(match[1]) : null;
             const colour = colourIndex ? colourMap[colourIndex] : '#ccc';
-            return `<div class="instruction-line"><span class="instruction-swatch" style="background:${colour};"></span>${line}</div>`;
+            const formatted = line.replace(/^(Row \d+ \([^)]+\):)/, '<strong>$1</strong>');
+            return `<div class="instruction-line"><span class="instruction-swatch" style="background:${colour};"></span>${formatted}</div>`;
         }).join('');
     }
 
