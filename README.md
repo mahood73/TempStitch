@@ -15,35 +15,52 @@ Enter your location, and TempStitch fetches the daily maximum temperature for a 
 
 ## Usage
 
-Open `index.html` in a browser, search for a location (or use device location), select a year, and click **Generate Design**.
+Serve the project folder over HTTP (e.g. `npx serve .`), then open the served URL in a browser. Search for a location (or use device location), select a year, and click **Generate Design**.
 
 ## Development
 
-No build step required. Edit the HTML, CSS, and JS files directly and refresh the browser.
+No build step required. All JavaScript files are ES modules loaded directly by the browser.
+
+**Important:** The application must be served over HTTP (not opened as a `file://` URL) because ES modules require a network origin. Use VS Code's **Live Server** extension, `python3 -m http.server`, or any static file server.
+
+### Running locally
+
+1. Start a static file server in the project root (e.g. VS Code Live Server, `npx serve .`, or `python3 -m http.server`).
+2. Open the served URL in your browser.
+
+### Running tests
+
+```sh
+npm test
+```
+
+Tests use Node's built-in test runner (`node --test`) with no third-party dependencies. They import the same ES module interfaces used by the browser.
 
 ### Files
 
 ```
-index.html          — main page
-about.html          — about and roadmap
-css/styles.css      — styling
-js/location.js      — lat/long input, geolocation, and search
-js/weather.js       — Open-Meteo API integration
-js/color-mapper.js  — temperature-to-colour mapping
-js/pattern.js       — design and pattern generation
-js/export.js        — image download
-js/main.js          — app wiring and event handlers
+index.html              — main page (module entry point)
+about.html              — about and roadmap
+css/styles.css          — styling
+js/location.js          — lat/long input, geolocation, and search
+js/weather.js           — Open-Meteo API integration
+js/weather-dataset.js   — weather domain types, validation, and error categories
+js/color-mapper.js      — temperature-to-colour mapping
+js/pattern.js           — design and pattern generation
+js/export.js            — export composition and file downloads
+js/main.js              — app wiring and event handlers (entry point)
+js/*.test.js            — tests
 ```
 
 ## Roadmap
 
-| Version | Description |
-|---------|-------------|
-| **v1 (MVP)** | Core functionality, polish, and deployment |
-| **v1.1** | Stitch count presets, downloadable instructions, size estimation, colour key grid, favicon, C/F toggle, knit/crochet toggle, UK/US terminology, layout reorder, UI polish, row counts |
-| **v1.5** | Gauge input, PDF export, yarn quantity calculator, zoom, tension-based sizing, logo, stitched preview |
-| **v2** | Date range selection, border stitches, aggregation modes |
-| **Someday** | Map picker, multiple locations, community gallery |
+| Version      | Description                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1 (MVP)** | Core functionality, polish, and deployment                                                                                                                                            |
+| **v1.1**     | Stitch count presets, downloadable instructions, size estimation, colour key grid, favicon, C/F toggle, knit/crochet toggle, UK/US terminology, layout reorder, UI polish, row counts |
+| **v1.5**     | Gauge input, PDF export, yarn quantity calculator, zoom, tension-based sizing, logo, stitched preview                                                                                 |
+| **v2**       | Date range selection, border stitches, aggregation modes                                                                                                                              |
+| **Someday**  | Map picker, multiple locations, community gallery                                                                                                                                     |
 
 See [GitHub Issues](https://github.com/mahood73/TempStitch/issues) for details.
 
@@ -53,4 +70,14 @@ Weather data from [Open-Meteo](https://open-meteo.com) (free, no API key require
 
 ## License
 
-MIT
+TempStitch is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+The AGPL was chosen to ensure that improvements to hosted versions of TempStitch remain available to the community. You're welcome to use, modify and self-host the project, but if you make your modified version available over a network, the AGPL requires you to make the corresponding source code available as well.
+
+See the [LICENSE](LICENSE) file for the full licence text.
+
+## Contributing
+
+Issues, feature requests and pull requests are very welcome.
+
+If you build something interesting with TempStitch, I'd love to hear about it!

@@ -1,226 +1,247 @@
-(() => {
-    const $ = (id) => document.getElementById(id);
+import { getSaved, save, validate, requestBrowserLocation } from './location.js';
+import { fetchWeather } from './weather.js';
+import { dateRangeFromYear, createWeatherRequest, WeatherError } from './weather-dataset.js';
+import { generate, renderProject } from './pattern.js';
+import { createProjectStore } from './project-state.js';
+import { downloadImage, downloadInstructions } from './export.js';
+import { PROJECT_TYPES, typeLabel } from './project-types.js';
+import { setupSearch } from './search.js';
 
-    const els = {
-        lat: $('latitude'),
-        lon: $('longitude'),
-        geoBtn: $('geo-location-btn'),
-        searchInput: $('location-search'),
-        searchResults: $('search-results'),
-        fetchBtn: $('fetch-weather-btn'),
-        status: $('location-status'),
-        tempUnit: $('temp-unit'),
-        stitchCount: $('stitch-count'),
-        yearSelect: $('year-select'),
-        numColours: $('num-colours'),
-        colourKeyMin: $('colour-key-min'),
-        colourKeyMax: $('colour-key-max'),
-        palette: $('colour-palette'),
-        patternSection: $('pattern-section'),
-        patternPreview: $('pattern-preview'),
-        patternStats: $('pattern-stats'),
-        colourKey: $('colour-key'),
-        patternInstructions: $('pattern-instructions'),
-        loading: $('loading'),
-        error: $('error'),
-        downloadBtn: $('download-image-btn'),
-    };
+const $ = (id) => document.getElementById(id);
 
-    let currentPattern = null;
-    let hasGenerated = false;
-    let searchTimeout = null;
+const els = {
+    lat: $('latitude'),
+    lon: $('longitude'),
+    geoBtn: $('geo-location-btn'),
+    searchInput: $('location-search'),
+    searchResults: $('search-results'),
+    fetchBtn: $('fetch-weather-btn'),
+    status: $('location-status'),
+    craftType: $('craft-type'),
+    tempUnit: $('temp-unit'),
+    stitchCount: $('stitch-count'),
+    stitchPreset: $('stitch-preset'),
+    yearSelect: $('year-select'),
+    numColours: $('num-colours'),
+    colourKeyMin: $('colour-key-min'),
+    colourKeyMax: $('colour-key-max'),
+    palette: $('colour-palette'),
+    terminology: $('terminology'),
+    settingsSection: $('settings-section'),
+    settingsHeading: $('settings-heading'),
+    settingsBody: $('settings-body'),
+    patternSection: $('pattern-section'),
+    patternPreview: $('pattern-preview'),
+    patternStats: $('pattern-stats'),
+    colourKey: $('colour-key'),
+    patternInstructions: $('pattern-instructions'),
+    loading: $('loading'),
+    error: $('error'),
+    downloadBtn: $('download-image-btn'),
+    downloadInstructionsBtn: $('download-instructions-btn'),
+    editSettingsBtn: $('edit-settings-btn'),
+};
 
-    function showError(msg) {
-        els.error.textContent = msg;
-        els.error.style.display = 'block';
+const projectStore = createProjectStore((project) => {
+    renderProject(project, {
+        stats: els.patternStats,
+        grid: els.patternPreview,
+        colourKey: els.colourKey,
+        instructions: els.patternInstructions,
+    });
+});
+
+let hasGenerated = false;
+
+function projectType() {
+    const selected = els.stitchPreset.selectedOptions[0];
+    if (selected?.dataset?.projectType) return selected.dataset.projectType;
+    const sts = parseInt(els.stitchCount.value) || 50;
+    return sts <= 50 ? PROJECT_TYPES.scarf : PROJECT_TYPES.blanket;
+}
+
+function updateLabels() {
+    const type = projectType();
+    const cap = typeLabel(type);
+    const low = type;
+
+    els.fetchBtn.textContent = hasGenerated ? `Update ${cap}` : `Create ${cap}`;
+    els.settingsHeading.textContent = hasGenerated ? `Edit your ${low}` : 'Settings';
+
+    const toggle = els.settingsBody.querySelector('.settings-toggle');
+    if (toggle) {
+        toggle.textContent = hasGenerated ? 'Change settings' : `Configure your ${low}`;
     }
 
-    function hideError() {
-        els.error.style.display = 'none';
+    const resultHeading = els.patternSection.querySelector('h2');
+    if (resultHeading) {
+        resultHeading.textContent = `Your ${cap}`;
     }
+}
 
-    function showLoading(msg) {
-        els.loading.querySelector('p').textContent = msg || 'Loading...';
-        els.loading.style.display = 'block';
+function showError(msg) {
+    els.error.textContent = msg;
+    els.error.style.display = 'block';
+}
+
+function hideError() {
+    els.error.style.display = 'none';
+}
+
+function showLoading(msg) {
+    els.loading.querySelector('p').textContent = msg || 'Loading...';
+    els.loading.style.display = 'block';
+}
+
+function hideLoading() {
+    els.loading.style.display = 'none';
+}
+
+function setStatus(msg, type) {
+    els.status.textContent = msg;
+    els.status.className = 'status ' + (type || '');
+}
+
+function getLocation() {
+    const loc = validate(els.lat.value, els.lon.value);
+    if (!loc) {
+        showError('Select a location by searching for a place or using "Use my current location".');
+        els.searchInput.focus();
+        return null;
     }
+    save(loc.lat, loc.lon);
+    const displayName = els.searchInput.value.trim() || `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`;
+    return { ...loc, displayName };
+}
 
-    function hideLoading() {
-        els.loading.style.display = 'none';
-    }
+function weatherErrorMessage(err) {
+    return err instanceof WeatherError
+        ? err.message
+        : 'Unable to load weather data. Please try again';
+}
 
-    function setStatus(msg, type) {
-        els.status.textContent = msg;
-        els.status.className = 'status ' + (type || '');
-    }
+async function generatePattern() {
+    hideError();
+    const loc = getLocation();
+    if (!loc) return;
 
-    function getLocation() {
-        const loc = Location.validate(els.lat.value, els.lon.value);
-        if (!loc) {
-            showError('Please enter valid latitude (-90 to 90) and longitude (-180 to 180)');
-            return null;
-        }
-        Location.save(loc.lat, loc.lon);
-        return loc;
-    }
+    showLoading('Fetching weather data...');
+    els.fetchBtn.disabled = true;
 
-    function hideSearchResults() {
-        els.searchResults.style.display = 'none';
-        els.searchResults.innerHTML = '';
-    }
-
-    function showSearchResults(results) {
-        if (results.length === 0) {
-            els.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            els.searchResults.style.display = 'block';
-            return;
-        }
-
-        els.searchResults.innerHTML = results.map((r, i) => {
-            const parts = [r.name];
-            if (r.admin1) parts.push(r.admin1);
-            if (r.country) parts.push(r.country);
-            const meta = parts.join(', ');
-            const coords = `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`;
-            return `<div class="search-result-item" data-index="${i}">
-                <div class="search-result-name">${r.name}</div>
-                <div class="search-result-meta">${meta} &middot; ${coords}</div>
-            </div>`;
-        }).join('');
-
-        els.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', () => {
-                const r = results[parseInt(item.dataset.index)];
-                els.lat.value = r.latitude.toFixed(4);
-                els.lon.value = r.longitude.toFixed(4);
-                const parts = [r.name];
-                if (r.admin1) parts.push(r.admin1);
-                if (r.country) parts.push(r.country);
-                els.searchInput.value = parts.join(', ');
-                hideSearchResults();
-                Location.save(r.latitude, r.longitude);
-                setStatus(`Location set: ${r.name}`, 'success');
-            });
-        });
-
-        els.searchResults.style.display = 'block';
-    }
-
-    async function handleSearch() {
-        const query = els.searchInput.value.trim();
-        if (query.length < 2) {
-            hideSearchResults();
-            return;
-        }
-
-        try {
-            const results = await Location.search(query);
-            showSearchResults(results);
-        } catch (err) {
-            hideSearchResults();
-        }
-    }
-
-    async function generatePattern() {
-        hideError();
-        const loc = getLocation();
-        if (!loc) return;
-
-        showLoading('Fetching weather data...');
-        els.fetchBtn.disabled = true;
-
-        try {
-            const unit = els.tempUnit.value;
-            const year = els.yearSelect.value ? parseInt(els.yearSelect.value) : null;
-            const result = await Weather.fetchDailyMax(loc.lat, loc.lon, unit, year);
-
-            if (result.days.length === 0) {
-                showError('No weather data available for this location and date range');
-                hideLoading();
-                return;
-            }
-
-            const options = {
-                stitchCount: parseInt(els.stitchCount.value) || 50,
-                paletteName: els.palette.value,
-                numColours: parseInt(els.numColours.value) || 10,
-                colourKeyMin: els.colourKeyMin.value ? parseFloat(els.colourKeyMin.value) : null,
-                colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
-            };
-
-            currentPattern = Pattern.generate(result, options);
-
-            hideLoading();
-
-            const unitSymbol = unit === 'fahrenheit' ? '°F' : '°C';
-            Pattern.renderStats(currentPattern.stats, els.patternStats, unitSymbol);
-            Pattern.renderGrid(currentPattern, els.patternPreview);
-            Pattern.renderColourKey(currentPattern.colourKey, els.colourKey);
-            Pattern.renderInstructions(currentPattern, els.patternInstructions);
-
-            els.patternSection.style.display = 'block';
-            els.patternSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            if (!hasGenerated) {
-                hasGenerated = true;
-                els.fetchBtn.textContent = 'Update Design';
-            }
-
-            setStatus(`Design generated: ${result.meta.latitude.toFixed(2)}, ${result.meta.longitude.toFixed(2)}`, 'success');
-        } catch (err) {
-            hideLoading();
-            showError('Failed to fetch weather data: ' + err.message);
-        } finally {
+    try {
+        const unit = els.tempUnit.value;
+        const year = parseInt(els.yearSelect.value);
+        if (isNaN(year) || year < 1940 || year > new Date().getFullYear()) {
+            showError('Please select a valid year (1940–' + new Date().getFullYear() + ').');
             els.fetchBtn.disabled = false;
+            return;
         }
+        const dateRange = dateRangeFromYear(year);
+        const request = createWeatherRequest(loc.displayName, loc.lat, loc.lon, dateRange, unit);
+        const dataset = await fetchWeather(request);
+
+        const options = {
+            craftType: els.craftType.value,
+            terminology: els.terminology.value,
+            stitchCount: parseInt(els.stitchCount.value) || 50,
+            paletteName: els.palette.value,
+            numColours: parseInt(els.numColours.value) || 10,
+            colourKeyMin: els.colourKeyMin.value ? parseFloat(els.colourKeyMin.value) : null,
+            colourKeyMax: els.colourKeyMax.value ? parseFloat(els.colourKeyMax.value) : null,
+        };
+
+        const project = generate(dataset, options);
+        const committedProject = projectStore.commit(project);
+
+        hideLoading();
+
+        els.patternSection.style.display = 'block';
+        document.querySelector('main').classList.add('has-pattern');
+        els.patternSection.classList.remove('pattern-animate');
+        void els.patternSection.offsetWidth;
+        els.patternSection.classList.add('pattern-animate');
+        els.patternSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (!hasGenerated) {
+            hasGenerated = true;
+            updateLabels();
+            els.settingsBody.removeAttribute('open');
+        }
+
+        const location = committedProject.dataset.request.location;
+        const source = committedProject.dataset.provenance;
+        setStatus(
+            `Design generated for ${location.displayName} (weather source: ${source.latitude.toFixed(2)}, ${source.longitude.toFixed(2)})`,
+            'success'
+        );
+    } catch (err) {
+        hideLoading();
+        if (projectStore.getProject()) {
+            showError(weatherErrorMessage(err) + ' The previous design is unchanged.');
+        } else {
+            showError(weatherErrorMessage(err));
+        }
+    } finally {
+        els.fetchBtn.disabled = false;
+    }
+}
+
+async function handleGeoLocation() {
+    hideError();
+    setStatus('Getting your location...', '');
+
+    try {
+        const loc = await requestBrowserLocation();
+        els.lat.value = loc.lat.toFixed(4);
+        els.lon.value = loc.lon.toFixed(4);
+        save(loc.lat, loc.lon);
+        els.searchInput.value = 'Current location';
+        setStatus('Location set', 'success');
+    } catch (err) {
+        setStatus(err.message, 'error');
+    }
+}
+
+function init() {
+    const saved = getSaved();
+    if (saved) {
+        els.lat.value = saved.lat;
+        els.lon.value = saved.lon;
     }
 
-    async function handleGeoLocation() {
-        hideError();
-        setStatus('Getting your location...', '');
+    const prevYear = new Date().getFullYear() - 1;
+    els.yearSelect.value = prevYear;
+    els.yearSelect.max = prevYear;
 
-        try {
-            const loc = await Location.requestBrowserLocation();
-            els.lat.value = loc.lat.toFixed(4);
-            els.lon.value = loc.lon.toFixed(4);
-            Location.save(loc.lat, loc.lon);
-            setStatus('Location set', 'success');
-        } catch (err) {
-            setStatus(err.message, 'error');
+    updateLabels();
+
+    setupSearch(els, { save, setStatus });
+
+    els.geoBtn.addEventListener('click', handleGeoLocation);
+    els.fetchBtn.addEventListener('click', generatePattern);
+    els.downloadBtn.addEventListener('click', () => {
+        const project = projectStore.getProject();
+        if (project) downloadImage(project);
+    });
+
+    els.downloadInstructionsBtn.addEventListener('click', () => {
+        const project = projectStore.getProject();
+        if (project) downloadInstructions(project);
+    });
+
+    els.editSettingsBtn.addEventListener('click', () => {
+        els.settingsBody.setAttribute('open', '');
+        els.settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        els.craftType.focus();
+    });
+
+    els.stitchPreset.addEventListener('change', () => {
+        const val = els.stitchPreset.value;
+        if (val) {
+            els.stitchCount.value = val;
         }
-    }
+        updateLabels();
+    });
+}
 
-    function init() {
-        const saved = Location.getSaved();
-        if (saved) {
-            els.lat.value = saved.lat;
-            els.lon.value = saved.lon;
-        }
-
-        const prevYear = new Date().getFullYear() - 1;
-        els.yearSelect.value = prevYear;
-        els.yearSelect.max = prevYear;
-
-        els.searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(handleSearch, 300);
-        });
-
-        els.searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') hideSearchResults();
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!els.searchResults.contains(e.target) && e.target !== els.searchInput) {
-                hideSearchResults();
-            }
-        });
-
-        els.geoBtn.addEventListener('click', handleGeoLocation);
-        els.fetchBtn.addEventListener('click', generatePattern);
-        els.downloadBtn.addEventListener('click', () => {
-            if (currentPattern) Export.downloadImage(currentPattern);
-        });
-    }
-
-    init();
-})();
+init();

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>TempStitch</title>
+  <desc>A woven temperature blanket in cool-to-warm colours</desc>
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="6">
+    <path d="M11 10v9c0 5 10 5 10 0v-9M11 28v9c0 5 10 5 10 0v-9M11 46v8c0 5 10 5 10 0v-8" stroke="#93c5fd"/>
+    <path d="M27 10v9c0 5 10 5 10 0v-9M27 28v9c0 5 10 5 10 0v-9M27 46v8c0 5 10 5 10 0v-8" stroke="#67e8f9"/>
+    <path d="M43 10v9c0 5 10 5 10 0v-9M43 28v9c0 5 10 5 10 0v-9M43 46v8c0 5 10 5 10 0v-8" stroke="#fb923c"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="2" opacity=".72">
+    <path d="M8 25h16M24 25h16M40 25h16M8 43h16M24 43h16M40 43h16"/>
+  </g>
+</svg>

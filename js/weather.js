@@ -1,60 +1,95 @@
-const Weather = (() => {
-    const API_BASE = 'https://archive-api.open-meteo.com/v1/archive';
+import {
+    DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+    WeatherError,
+    WeatherErrorCategory,
+    normalizeWeatherRequest,
+    validateDataset,
+} from './weather-dataset.js';
 
-    function dateToString(d) {
-        return d.toISOString().split('T')[0];
+const API_BASE = 'https://archive-api.open-meteo.com/v1/archive';
+
+function isFiniteCoordinate(latitude, longitude) {
+    return Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+        && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+}
+
+function parseOpenMeteoPayload(data, request) {
+    const times = data?.daily?.time;
+    const temperatures = data?.daily?.temperature_2m_max;
+    const providerUnit = data?.daily_units?.temperature_2m_max;
+    const expectedProviderUnit = request.tempUnit === 'celsius' ? '°C' : '°F';
+    if (!Array.isArray(times) || !Array.isArray(temperatures) || times.length !== temperatures.length) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+    if (providerUnit !== expectedProviderUnit
+        || typeof data.timezone !== 'string' || data.timezone.trim() === ''
+        || !isFiniteCoordinate(data.latitude, data.longitude)) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
     }
 
-    function getDateRange(year) {
-        if (year) {
-            return { start: `${year}-01-01`, end: `${year}-12-31` };
-        }
-        const end = new Date();
-        const start = new Date();
-        start.setDate(start.getDate() - 364);
-        return { start: dateToString(start), end: dateToString(end) };
+    const rawObservations = times.map((date, index) => ({ date, temp: temperatures[index] }));
+    const provenance = {
+        source: 'Open-Meteo',
+        measurement: DAILY_MAXIMUM_TEMPERATURE_MEASUREMENT,
+        temperatureUnit: request.tempUnit,
+        timezone: data.timezone,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        requestedDateRange: request.dateRange,
+        returnedDateRange: {
+            start: times[0],
+            end: times[times.length - 1],
+        },
+    };
+
+    return { rawObservations, provenance };
+}
+
+function buildFetchUrl(request) {
+    const params = new URLSearchParams({
+        latitude: request.location.lat,
+        longitude: request.location.lon,
+        start_date: request.dateRange.start,
+        end_date: request.dateRange.end,
+        daily: 'temperature_2m_max',
+        temperature_unit: request.tempUnit,
+        timezone: 'auto',
+    });
+    return `${API_BASE}?${params}`;
+}
+
+export function fetchUrl(request) {
+    return buildFetchUrl(normalizeWeatherRequest(request));
+}
+
+export async function fetchWeather(request, fetchFn = fetch, signal) {
+    const normalizedRequest = normalizeWeatherRequest(request);
+    const url = buildFetchUrl(normalizedRequest);
+
+    let response;
+    try {
+        response = await fetchFn(url, { signal });
+    } catch (error) {
+        throw new WeatherError(WeatherErrorCategory.PROVIDER_UNAVAILABLE, error);
     }
 
-    async function fetchDailyMax(lat, lon, tempUnit = 'celsius', year) {
-        const { start, end } = getDateRange(year);
-        const params = new URLSearchParams({
-            latitude: lat,
-            longitude: lon,
-            start_date: start,
-            end_date: end,
-            daily: 'temperature_2m_max',
-            temperature_unit: tempUnit,
-            timezone: 'auto',
-        });
-
-        const res = await fetch(`${API_BASE}?${params}`);
-        if (!res.ok) {
-            const body = await res.json().catch(() => null);
-            throw new Error(body?.reason || `Weather API error (${res.status})`);
-        }
-
-        const data = await res.json();
-        const times = data.daily.time;
-        const temps = data.daily.temperature_2m_max;
-
-        const days = [];
-        for (let i = 0; i < times.length; i++) {
-            if (temps[i] !== null && temps[i] !== undefined) {
-                days.push({ date: times[i], temp: temps[i] });
-            }
-        }
-
-        return {
-            days,
-            meta: {
-                latitude: data.latitude,
-                longitude: data.longitude,
-                elevation: data.elevation,
-                timezone: data.timezone,
-                generationMs: data.generationtime_ms,
-            },
-        };
+    if (!response || typeof response.ok !== 'boolean') {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE);
+    }
+    if (!response.ok) {
+        const category = response.status === 400 || response.status === 422
+            ? WeatherErrorCategory.PROVIDER_REJECTION
+            : WeatherErrorCategory.PROVIDER_UNAVAILABLE;
+        throw new WeatherError(category, new Error(`Weather provider returned HTTP ${response.status}`));
     }
 
-    return { fetchDailyMax, getDateRange };
-})();
+    let data;
+    try {
+        data = await response.json();
+    } catch (error) {
+        throw new WeatherError(WeatherErrorCategory.MALFORMED_RESPONSE, error);
+    }
+
+    const { rawObservations, provenance } = parseOpenMeteoPayload(data, normalizedRequest);
+    return validateDataset(normalizedRequest, rawObservations, provenance);
+}
