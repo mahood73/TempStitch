@@ -103,7 +103,16 @@ header h1 {
 main {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 1.25rem;
+    padding: 0 1.25rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.preview-card {
+    width: 100%;
+    max-width: 1100px;
 }
 
 .card {
@@ -155,27 +164,7 @@ main {
     text-decoration: underline;
 }
 
-/* Layout reorder: preview wins after generation */
-
-main.has-pattern #location-section {
-    order: 3;
-}
-
-main.has-pattern #settings-section {
-    order: 4;
-}
-
-main.has-pattern #pattern-section {
-    order: 1;
-}
-
-main.has-pattern #loading {
-    order: 2;
-}
-
-main.has-pattern #error {
-    order: 2;
-}
+/* Layout: preview/main section is above location/settings by HTML order */
 
 /* Forms */
 
@@ -507,29 +496,11 @@ main.has-pattern #error {
     line-height: 1.5;
 }
 
-/* Pattern section — full-width breakout */
+/* Pattern section */
 
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-#pattern-section,
-#empty-state {
-    width: 90vw;
-    max-width: 1200px;
-    margin-left: calc(50% - 45vw);
-    margin-right: calc(50% - 45vw);
-}
-
-@media (max-width: 900px) {
-    #pattern-section,
-    #empty-state {
-        width: 100%;
-        max-width: 100%;
-        margin-left: 0;
-        margin-right: 0;
-    }
 }
 
 .pattern-header {
