@@ -15,216 +15,226 @@
         <p class="subtitle">
           Design beautiful temperature blankets from historical weather
         </p>
-        <p><a href="about.html">About / Roadmap</a></p>
+        <p class="header-nav"><a href="about.html">About</a></p>
       </header>
+    </div>
 
-      <main>
-        <section class="card" id="location-section">
-          <h2>Location</h2>
-          <div class="form-group search-group">
-            <label for="location-search">Search for a place</label>
+    <main>
+      <section class="card preview-card" id="empty-state">
+        <div class="empty-state">
+          <div class="empty-state-icon">🧶</div>
+          <h2>Your design will appear here</h2>
+          <p>Choose a location and year, then click Create to see your temperature blanket pattern.</p>
+        </div>
+      </section>
+
+      <section class="card preview-card" id="pattern-section" style="display: none">
+        <div class="pattern-header">
+          <h2>Your Scarf</h2>
+          <div class="pattern-actions">
+            <button
+              id="edit-settings-btn"
+              class="btn btn-secondary"
+              type="button"
+            >
+              Edit Settings
+            </button>
+            <button
+              id="download-image-btn"
+              class="btn btn-secondary"
+              type="button"
+            >
+              Export
+            </button>
+          </div>
+        </div>
+        <div class="pattern-scroll">
+          <div id="pattern-preview" class="pattern-grid"></div>
+        </div>
+        <div id="pattern-stats" class="stats-panel"></div>
+        <div id="colour-key" class="colour-key"></div>
+        <div class="instructions-section">
+          <div class="instructions-header">
+            <h3>Pattern Instructions</h3>
+            <button
+              id="download-instructions-btn"
+              class="btn btn-secondary btn-small"
+              type="button"
+            >
+              Download
+            </button>
+          </div>
+          <div id="pattern-instructions" class="instructions"></div>
+        </div>
+      </section>
+
+      <div id="loading" class="loading" style="display: none">
+        <div class="spinner"></div>
+        <p>Fetching weather data...</p>
+      </div>
+
+      <div id="error" class="error" style="display: none" role="alert"></div>
+    </main>
+
+    <div class="container">
+      <section class="card" id="location-section">
+        <h2>Location</h2>
+        <div class="form-group search-group">
+          <label for="location-search">Search for a place</label>
+          <input
+            type="text"
+            id="location-search"
+            placeholder="e.g. London, Paris, New York"
+            autocomplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="search-results"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+          />
+          <div
+            id="search-results"
+            class="search-results"
+            style="display: none"
+          ></div>
+        </div>
+        <div class="form-row" style="display: none">
+          <div class="form-group">
+            <label for="latitude">Latitude</label>
             <input
-              type="text"
-              id="location-search"
-              placeholder="e.g. London, Paris, New York"
-              autocomplete="off"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-controls="search-results"
-              aria-expanded="false"
-              aria-haspopup="listbox"
+              type="number"
+              id="latitude"
+              step="0.0001"
+              placeholder="e.g. 51.5074"
+              min="-90"
+              max="90"
             />
-            <div
-              id="search-results"
-              class="search-results"
-              style="display: none"
-            ></div>
           </div>
-          <div class="form-row" style="display: none">
-            <div class="form-group">
-              <label for="latitude">Latitude</label>
-              <input
-                type="number"
-                id="latitude"
-                step="0.0001"
-                placeholder="e.g. 51.5074"
-                min="-90"
-                max="90"
-              />
-            </div>
-            <div class="form-group">
-              <label for="longitude">Longitude</label>
-              <input
-                type="number"
-                id="longitude"
-                step="0.0001"
-                placeholder="e.g. -0.1278"
-                min="-180"
-                max="180"
-              />
-            </div>
+          <div class="form-group">
+            <label for="longitude">Longitude</label>
+            <input
+              type="number"
+              id="longitude"
+              step="0.0001"
+              placeholder="e.g. -0.1278"
+              min="-180"
+              max="180"
+            />
           </div>
-          <button id="geo-location-btn" class="btn btn-secondary" type="button">
-            📍 Use my current location
-          </button>
-          <div id="location-status" class="status" aria-live="polite"></div>
-        </section>
+        </div>
+        <button id="geo-location-btn" class="btn btn-secondary" type="button">
+          📍 Use my current location
+        </button>
+        <div id="location-status" class="status" aria-live="polite"></div>
+      </section>
 
-        <section class="card" id="settings-section">
-          <h2 id="settings-heading">Settings</h2>
-          <details id="settings-body" open>
-            <summary class="settings-toggle">Configure your scarf</summary>
+      <section class="card" id="settings-section">
+        <h2 id="settings-heading">Settings</h2>
+        <details id="settings-body" open>
+          <summary class="settings-toggle">Configure your scarf</summary>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label for="craft-type">Craft</label>
+              <select id="craft-type">
+                <option value="knit">Knitting</option>
+                <option value="crochet" selected>Crochet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="temp-unit">Temperature Unit</label>
+              <select id="temp-unit">
+                <option value="celsius">Celsius (°C)</option>
+                <option value="fahrenheit">Fahrenheit (°F)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="colour-palette">Colour Palette</label>
+              <select id="colour-palette">
+                <option value="default">Temperature Gradient</option>
+                <option value="warm">Warm Tones</option>
+                <option value="cool">Cool Tones</option>
+                <option value="pastel">Pastels</option>
+                <option value="monochrome">Monochrome</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="form-group">
+              <label for="terminology">Terminology</label>
+              <select id="terminology">
+                <option value="uk">UK</option>
+                <option value="us">US</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="stitch-preset">Preset</label>
+              <select id="stitch-preset">
+                <option value="">Custom</option>
+                <option value="50" data-project-type="scarf" selected>Scarf (50)</option>
+                <option value="200" data-project-type="blanket">Blanket (200)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="stitch-count">Stitches per Row</label>
+              <input
+                type="number"
+                id="stitch-count"
+                value="50"
+                min="10"
+                max="200"
+              />
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="form-group">
+              <label for="year-select">Year</label>
+              <input type="number" id="year-select" min="1940" step="1" />
+              <small>Jan 1 – Dec 31. Data available from 1940.</small>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="form-group">
+              <label for="num-colours">Number of Colours</label>
+              <input
+                type="number"
+                id="num-colours"
+                value="10"
+                min="3"
+                max="20"
+                step="1"
+              />
+              <small>Default: 10</small>
+            </div>
+          </div>
+
+          <details class="advanced-toggle">
+            <summary>Advanced Options</summary>
             <div class="settings-grid">
               <div class="form-group">
-                <label for="craft-type">Craft</label>
-                <select id="craft-type">
-                  <option value="knit">Knitting</option>
-                  <option value="crochet" selected>Crochet</option>
-                </select>
+                <label for="colour-key-min">Colour Key Min (°)</label>
+                <input type="number" id="colour-key-min" step="1" />
+                <small>Auto-calculated from data</small>
               </div>
               <div class="form-group">
-                <label for="temp-unit">Temperature Unit</label>
-                <select id="temp-unit">
-                  <option value="celsius">Celsius (°C)</option>
-                  <option value="fahrenheit">Fahrenheit (°F)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="colour-palette">Colour Palette</label>
-                <select id="colour-palette">
-                  <option value="default">Temperature Gradient</option>
-                  <option value="warm">Warm Tones</option>
-                  <option value="cool">Cool Tones</option>
-                  <option value="pastel">Pastels</option>
-                  <option value="monochrome">Monochrome</option>
-                </select>
+                <label for="colour-key-max">Colour Key Max (°)</label>
+                <input type="number" id="colour-key-max" step="1" />
+                <small>Auto-calculated from data</small>
               </div>
             </div>
-
-            <div class="settings-row">
-              <div class="form-group">
-                <label for="terminology">Terminology</label>
-                <select id="terminology">
-                  <option value="uk">UK</option>
-                  <option value="us">US</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="stitch-preset">Preset</label>
-                <select id="stitch-preset">
-                  <option value="">Custom</option>
-                  <option value="50" data-project-type="scarf" selected>Scarf (50)</option>
-                  <option value="200" data-project-type="blanket">Blanket (200)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="stitch-count">Stitches per Row</label>
-                <input
-                  type="number"
-                  id="stitch-count"
-                  value="50"
-                  min="10"
-                  max="200"
-                />
-              </div>
-            </div>
-
-            <div class="settings-row">
-              <div class="form-group">
-                <label for="year-select">Year</label>
-                <input type="number" id="year-select" min="1940" step="1" />
-                <small>Jan 1 – Dec 31. Data available from 1940.</small>
-              </div>
-            </div>
-
-            <div class="settings-row">
-              <div class="form-group">
-                <label for="num-colours">Number of Colours</label>
-                <input
-                  type="number"
-                  id="num-colours"
-                  value="10"
-                  min="3"
-                  max="20"
-                  step="1"
-                />
-                <small>Default: 10</small>
-              </div>
-            </div>
-
-            <details class="advanced-toggle">
-              <summary>Advanced Options</summary>
-              <div class="settings-grid">
-                <div class="form-group">
-                  <label for="colour-key-min">Colour Key Min (°)</label>
-                  <input type="number" id="colour-key-min" step="1" />
-                  <small>Auto-calculated from data</small>
-                </div>
-                <div class="form-group">
-                  <label for="colour-key-max">Colour Key Max (°)</label>
-                  <input type="number" id="colour-key-max" step="1" />
-                  <small>Auto-calculated from data</small>
-                </div>
-              </div>
-            </details>
           </details>
+        </details>
 
-          <button
-            id="fetch-weather-btn"
-            class="btn btn-primary btn-large"
-            type="button"
-          >
-            Create Scarf
-          </button>
-        </section>
-
-        <section class="card" id="pattern-section" style="display: none">
-          <div class="pattern-header">
-            <h2>Your Scarf</h2>
-            <div class="pattern-actions">
-              <button
-                id="edit-settings-btn"
-                class="btn btn-secondary"
-                type="button"
-              >
-                Edit Settings
-              </button>
-              <button
-                id="download-image-btn"
-                class="btn btn-secondary"
-                type="button"
-              >
-                Export
-              </button>
-            </div>
-          </div>
-          <div class="pattern-scroll">
-            <div id="pattern-preview" class="pattern-grid"></div>
-          </div>
-          <div id="pattern-stats" class="stats-panel"></div>
-          <div id="colour-key" class="colour-key"></div>
-          <div class="instructions-section">
-            <div class="instructions-header">
-              <h3>Pattern Instructions</h3>
-              <button
-                id="download-instructions-btn"
-                class="btn btn-secondary btn-small"
-                type="button"
-              >
-                Download
-              </button>
-            </div>
-            <div id="pattern-instructions" class="instructions"></div>
-          </div>
-        </section>
-
-        <div id="loading" class="loading" style="display: none">
-          <div class="spinner"></div>
-          <p>Fetching weather data...</p>
-        </div>
-
-        <div id="error" class="error" style="display: none" role="alert"></div>
-      </main>
+        <button
+          id="fetch-weather-btn"
+          class="btn btn-primary btn-large"
+          type="button"
+        >
+          Create Scarf
+        </button>
+      </section>
 
       <footer>
         <p>

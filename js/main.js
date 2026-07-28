@@ -31,6 +31,7 @@ const els = {
     settingsHeading: $('settings-heading'),
     settingsBody: $('settings-body'),
     patternSection: $('pattern-section'),
+    emptyState: $('empty-state'),
     patternPreview: $('pattern-preview'),
     patternStats: $('pattern-stats'),
     colourKey: $('colour-key'),
@@ -156,6 +157,7 @@ async function generatePattern() {
         hideLoading();
 
         els.patternSection.style.display = 'block';
+        els.emptyState.style.display = 'none';
         document.querySelector('main').classList.add('has-pattern');
         els.patternSection.classList.remove('pattern-animate');
         void els.patternSection.offsetWidth;
