@@ -205,10 +205,18 @@ main {
     transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus-visible,
+.form-group select:focus-visible {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.btn:focus-visible,
+a:focus-visible,
+.settings-toggle:focus-visible,
+.advanced-toggle summary:focus-visible {
+    outline: none;
     box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
@@ -248,16 +256,6 @@ main {
     font-size: 0.8rem;
     font-weight: 600;
     margin-bottom: 0.3rem;
-    color: var(--text);
-}
-
-.settings-row .form-group input {
-    width: 100%;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    font-size: 0.875rem;
-    background: var(--card);
     color: var(--text);
 }
 
@@ -591,7 +589,7 @@ main {
 
 .pattern-row {
     width: 100%;
-    height: 6px;
+    height: 5px;
     border-radius: 1px;
     position: relative;
     cursor: crosshair;

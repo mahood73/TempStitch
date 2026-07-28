@@ -30,17 +30,31 @@ test.describe('v1.1 smoke tests', () => {
         await expect(page.locator('#stitch-count')).toHaveValue('200');
     });
 
-    test('preset selection updates button label', async ({ page }) => {
+    test('project type labels follow preset and custom stitch selections', async ({ page }) => {
         await page.goto('/');
         const btn = page.locator('#fetch-weather-btn');
+        const toggle = page.locator('.settings-toggle');
+        const emptyStateMessage = page.locator('#empty-state-message');
 
         await expect(btn).toHaveText('Create Scarf');
+        await expect(toggle).toHaveText('Configure your scarf');
+        await expect(emptyStateMessage).toContainText('temperature scarf pattern');
 
         await page.locator('#stitch-preset').selectOption('200');
         await expect(btn).toHaveText('Create Blanket');
+        await expect(toggle).toHaveText('Configure your blanket');
+        await expect(emptyStateMessage).toContainText('temperature blanket pattern');
 
-        await page.locator('#stitch-preset').selectOption('50');
+        await page.locator('#stitch-preset').selectOption('');
+        await page.locator('#stitch-count').fill('50');
         await expect(btn).toHaveText('Create Scarf');
+        await expect(toggle).toHaveText('Configure your scarf');
+        await expect(emptyStateMessage).toContainText('temperature scarf pattern');
+
+        await page.locator('#stitch-count').fill('51');
+        await expect(btn).toHaveText('Create Blanket');
+        await expect(toggle).toHaveText('Configure your blanket');
+        await expect(emptyStateMessage).toContainText('temperature blanket pattern');
     });
 
     test('generating without location shows error', async ({ page }) => {
@@ -173,6 +187,49 @@ test.describe('v1.1 smoke tests', () => {
                 .some((r) => r.cssText?.includes('.pattern-animate'))
         );
         expect(css).toBe(true);
+    });
+
+    test('pattern rows are five pixels high', async ({ page }) => {
+        await page.goto('/');
+        const rowHeight = await page.evaluate(() =>
+            [...document.styleSheets]
+                .filter((s) => s.href?.includes('styles.css'))
+                .flatMap((s) => [...s.cssRules])
+                .find((r) => r.selectorText === '.pattern-row')
+                ?.style.height
+        );
+        expect(rowHeight).toBe('5px');
+    });
+
+    test('keyboard focus uses the shared visible ring', async ({ page }) => {
+        await page.goto('/');
+        const focused = async (selector) => {
+            await expect(page.locator(selector)).toBeFocused();
+            const style = await page.locator(selector).evaluate((element) => ({
+                isFocusVisible: element.matches(':focus-visible'),
+                boxShadow: getComputedStyle(element).boxShadow,
+            }));
+            expect(style.isFocusVisible).toBe(true);
+            expect(style.boxShadow).not.toBe('none');
+        };
+
+        await page.keyboard.press('Tab');
+        await focused('.header-nav a');
+
+        await page.keyboard.press('Tab');
+        await focused('#location-search');
+
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Tab');
+        await focused('.settings-toggle');
+
+        for (let i = 0; i < 9; i += 1) {
+            await page.keyboard.press('Tab');
+        }
+        await focused('.advanced-toggle summary');
+
+        await page.keyboard.press('Tab');
+        await focused('#fetch-weather-btn');
     });
 
     test('settings has Configure your scarf / blanket toggle text', async ({ page }) => {

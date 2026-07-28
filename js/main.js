@@ -32,6 +32,7 @@ const els = {
     settingsBody: $('settings-body'),
     patternSection: $('pattern-section'),
     emptyState: $('empty-state'),
+    emptyStateMessage: $('empty-state-message'),
     patternPreview: $('pattern-preview'),
     patternStats: $('pattern-stats'),
     colourKey: $('colour-key'),
@@ -67,6 +68,7 @@ function updateLabels() {
     const low = type;
 
     els.fetchBtn.textContent = hasGenerated ? `Update ${cap}` : `Create ${cap}`;
+    els.emptyStateMessage.textContent = `Choose a location and year, then click Create to see your temperature ${low} pattern.`;
     els.settingsHeading.textContent = hasGenerated ? `Edit your ${low}` : 'Settings';
 
     const toggle = els.settingsBody.querySelector('.settings-toggle');
@@ -243,6 +245,10 @@ function init() {
             els.stitchCount.value = val;
         }
         updateLabels();
+    });
+
+    els.stitchCount.addEventListener('input', () => {
+        if (!els.stitchPreset.value) updateLabels();
     });
 }
 
