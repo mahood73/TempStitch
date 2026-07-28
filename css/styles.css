@@ -518,8 +518,8 @@ main.has-pattern #error {
 #empty-state {
     width: 90vw;
     max-width: 1200px;
-    margin-left: calc((min(880px, 100vw - 2.5rem) - 90vw) / 2);
-    margin-right: calc((min(880px, 100vw - 2.5rem) - 90vw) / 2);
+    margin-left: calc(50% - 45vw);
+    margin-right: calc(50% - 45vw);
 }
 
 @media (max-width: 900px) {
