@@ -507,11 +507,29 @@ main.has-pattern #error {
     line-height: 1.5;
 }
 
-/* Pattern section */
+/* Pattern section — full-width breakout */
 
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+#pattern-section,
+#empty-state {
+    width: 90vw;
+    max-width: 1200px;
+    margin-left: calc((min(880px, 100vw - 2.5rem) - 90vw) / 2);
+    margin-right: calc((min(880px, 100vw - 2.5rem) - 90vw) / 2);
+}
+
+@media (max-width: 900px) {
+    #pattern-section,
+    #empty-state {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
 }
 
 .pattern-header {
@@ -598,12 +616,11 @@ main.has-pattern #error {
     flex-direction: column;
     gap: 2px;
     width: 100%;
-    max-width: 240px;
 }
 
 .pattern-row {
     width: 100%;
-    height: 5px;
+    height: 6px;
     border-radius: 1px;
     position: relative;
     cursor: crosshair;
