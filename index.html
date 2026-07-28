@@ -23,14 +23,17 @@
       <section class="card preview-card" id="empty-state">
         <div class="empty-state">
           <div class="empty-state-icon">🧶</div>
-          <h2>Your design will appear here</h2>
+          <h2 id="empty-state-title">Your scarf preview will appear here</h2>
           <p id="empty-state-message">Choose a location and year, then click Create to see your temperature scarf pattern.</p>
         </div>
       </section>
 
       <section class="card preview-card" id="pattern-section" style="display: none">
         <div class="pattern-header">
-          <h2>Your Scarf</h2>
+          <div class="pattern-title">
+            <h2>Your Scarf</h2>
+            <p id="pattern-metadata"></p>
+          </div>
           <div class="pattern-actions">
             <button
               id="edit-settings-btn"
@@ -48,10 +51,10 @@
             </button>
           </div>
         </div>
+        <div id="pattern-stats" class="stats-panel"></div>
         <div class="pattern-scroll">
           <div id="pattern-preview" class="pattern-grid"></div>
         </div>
-        <div id="pattern-stats" class="stats-panel"></div>
         <div id="colour-key" class="colour-key"></div>
         <div class="instructions-section">
           <div class="instructions-header">

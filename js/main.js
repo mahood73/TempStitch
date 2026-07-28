@@ -31,7 +31,9 @@ const els = {
     settingsHeading: $('settings-heading'),
     settingsBody: $('settings-body'),
     patternSection: $('pattern-section'),
+    patternMetadata: $('pattern-metadata'),
     emptyState: $('empty-state'),
+    emptyStateTitle: $('empty-state-title'),
     emptyStateMessage: $('empty-state-message'),
     patternPreview: $('pattern-preview'),
     patternStats: $('pattern-stats'),
@@ -68,6 +70,7 @@ function updateLabels() {
     const low = type;
 
     els.fetchBtn.textContent = hasGenerated ? `Update ${cap}` : `Create ${cap}`;
+    els.emptyStateTitle.textContent = `Your ${low} preview will appear here`;
     els.emptyStateMessage.textContent = `Choose a location and year, then click Create to see your temperature ${low} pattern.`;
     els.settingsHeading.textContent = hasGenerated ? `Edit your ${low}` : 'Settings';
 
@@ -155,6 +158,9 @@ async function generatePattern() {
 
         const project = generate(dataset, options);
         const committedProject = projectStore.commit(project);
+        const metadataLocation = committedProject.dataset.request.location;
+        const projectDateRange = committedProject.dataset.request.dateRange;
+        els.patternMetadata.textContent = `📍 ${metadataLocation.displayName} · ${projectDateRange.start.slice(0, 4)}`;
 
         hideLoading();
 

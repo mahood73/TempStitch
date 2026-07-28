@@ -1,5 +1,24 @@
 import { test, expect } from '@playwright/test';
 
+function dailyWeatherFor(year) {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year + 1, 0, 1));
+    const days = (end - start) / (24 * 60 * 60 * 1000);
+    const dates = Array.from({ length: days }, (_, index) =>
+        new Date(Date.UTC(year, 0, index + 1)).toISOString().slice(0, 10)
+    );
+    return {
+        latitude: 52.2053,
+        longitude: 0.1218,
+        timezone: 'Europe/London',
+        daily_units: { temperature_2m_max: '°C' },
+        daily: {
+            time: dates,
+            temperature_2m_max: dates.map((_, index) => 5 + (index % 20)),
+        },
+    };
+}
+
 test.describe('v1.1 smoke tests', () => {
 
     test('page loads with correct title and heading', async ({ page }) => {
@@ -34,26 +53,31 @@ test.describe('v1.1 smoke tests', () => {
         await page.goto('/');
         const btn = page.locator('#fetch-weather-btn');
         const toggle = page.locator('.settings-toggle');
+        const emptyStateTitle = page.locator('#empty-state-title');
         const emptyStateMessage = page.locator('#empty-state-message');
 
         await expect(btn).toHaveText('Create Scarf');
         await expect(toggle).toHaveText('Configure your scarf');
+        await expect(emptyStateTitle).toHaveText('Your scarf preview will appear here');
         await expect(emptyStateMessage).toContainText('temperature scarf pattern');
 
         await page.locator('#stitch-preset').selectOption('200');
         await expect(btn).toHaveText('Create Blanket');
         await expect(toggle).toHaveText('Configure your blanket');
+        await expect(emptyStateTitle).toHaveText('Your blanket preview will appear here');
         await expect(emptyStateMessage).toContainText('temperature blanket pattern');
 
         await page.locator('#stitch-preset').selectOption('');
         await page.locator('#stitch-count').fill('50');
         await expect(btn).toHaveText('Create Scarf');
         await expect(toggle).toHaveText('Configure your scarf');
+        await expect(emptyStateTitle).toHaveText('Your scarf preview will appear here');
         await expect(emptyStateMessage).toContainText('temperature scarf pattern');
 
         await page.locator('#stitch-count').fill('51');
         await expect(btn).toHaveText('Create Blanket');
         await expect(toggle).toHaveText('Configure your blanket');
+        await expect(emptyStateTitle).toHaveText('Your blanket preview will appear here');
         await expect(emptyStateMessage).toContainText('temperature blanket pattern');
     });
 
@@ -65,6 +89,45 @@ test.describe('v1.1 smoke tests', () => {
         await expect(error).toBeVisible();
         await expect(error).toHaveAttribute('role', 'alert');
         await expect(error).toContainText('Select a location');
+    });
+
+    test('generated preview shows its location and year above stats and grid', async ({ page }) => {
+        await page.route(/geocoding-api\.open-meteo\.com/, async (route) => {
+            await route.fulfill({
+                json: {
+                    results: [{
+                        name: 'Cambridge',
+                        admin1: 'England',
+                        country: 'United Kingdom',
+                        latitude: 52.2053,
+                        longitude: 0.1218,
+                    }],
+                },
+            });
+        });
+        await page.route(/archive-api\.open-meteo\.com/, async (route) => {
+            const startDate = new URL(route.request().url()).searchParams.get('start_date');
+            await route.fulfill({ json: dailyWeatherFor(Number(startDate.slice(0, 4))) });
+        });
+
+        await page.goto('/');
+        await expect(page.locator('#year-select')).toHaveValue(/^\d{4}$/);
+        const year = await page.locator('#year-select').inputValue();
+        await page.locator('#location-search').fill('Cambridge');
+        await page.locator('.search-result-item').click();
+        await page.locator('#fetch-weather-btn').click();
+        await expect(page.locator('#pattern-section')).toBeVisible();
+
+        await expect(page.locator('#pattern-metadata')).toHaveText(`📍 Cambridge, England, United Kingdom · ${year}`);
+        const previewWidthRatio = await page.locator('#pattern-section').evaluate((section) =>
+            section.getBoundingClientRect().width / window.innerWidth
+        );
+        expect(previewWidthRatio).toBeGreaterThanOrEqual(0.8);
+        expect(previewWidthRatio).toBeLessThanOrEqual(0.9);
+        const previewOrder = await page.locator('#pattern-section').evaluate((section) => [
+            ...section.children,
+        ].map((element) => element.id || element.className));
+        expect(previewOrder.indexOf('pattern-stats')).toBeLessThan(previewOrder.indexOf('pattern-scroll'));
     });
 
     test('result section is hidden on initial load', async ({ page }) => {

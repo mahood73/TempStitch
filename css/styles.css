@@ -105,14 +105,12 @@ main {
     flex-direction: column;
     align-items: center;
     gap: 1.25rem;
-    padding: 0 1.25rem;
-    max-width: 1200px;
+    width: 90vw;
     margin: 0 auto;
 }
 
 .preview-card {
     width: 100%;
-    max-width: 1100px;
 }
 
 .card {
@@ -512,6 +510,13 @@ a:focus-visible,
 
 .pattern-header h2 {
     margin-bottom: 0;
+}
+
+#pattern-metadata {
+    margin: 0.2rem 0 0;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .pattern-actions {
